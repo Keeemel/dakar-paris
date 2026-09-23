@@ -641,7 +641,7 @@
             }
 
             .weather-card {
-                top: 166px;
+                top: 190px;
                 right: 14px;
                 width: calc(100vw - 28px);
             }
@@ -802,7 +802,7 @@
             75: ["Forte neige", "❄️"],
             80: ["Averses légères", "🌦️"],
             81: ["Averses", "🌧️"],
-            82: [" fortes averses", "⛈️"],
+            82: ["Fortes averses", "⛈️"],
             95: ["Orage", "⛈️"],
             96: ["Orage avec grêle", "⛈️"],
             99: ["Orage fort", "⛈️"]
@@ -873,15 +873,15 @@
                     </div>
                     <div class="weather-forecast">
                         ${weather.daily.time.map((date, index) => {
-                            const description = getWeatherDescription(weather.daily.weather_code[index]);
-                            return `
+                    const description = getWeatherDescription(weather.daily.weather_code[index]);
+                    return `
                                 <div class="forecast-day">
                                     ${formatForecastDay(date, index)}
                                     <span class="forecast-icon" aria-hidden="true">${description[1]}</span>
                                     <span class="forecast-temperatures">${Math.round(weather.daily.temperature_2m_max[index])}° / ${Math.round(weather.daily.temperature_2m_min[index])}°</span>
                                 </div>
                             `;
-                        }).join("")}
+                }).join("")}
                     </div>
                 `;
 
