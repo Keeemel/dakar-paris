@@ -97,6 +97,22 @@
             color: #625e57;
         }
 
+        .header-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .header-meta span {
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #eee8de;
+            color: #625e57;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
         /* =========================
            COMPTEUR
         ========================= */
@@ -145,6 +161,80 @@
             letter-spacing: 1px;
 
             color: #77716a;
+        }
+
+        .map-tools {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+        }
+
+        .map-tool {
+            min-height: 40px;
+            padding: 0 13px;
+            border: 1px solid rgba(37, 35, 31, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 252, 246, 0.94);
+            color: #25231f;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .map-tool:hover,
+        .map-tool:focus-visible {
+            background: #25231f;
+            color: #fff;
+            outline: none;
+        }
+
+        .map-legend {
+            position: fixed;
+            left: 24px;
+            bottom: 24px;
+            z-index: 1000;
+            width: 190px;
+            padding: 14px;
+            border: 1px solid rgba(37, 35, 31, 0.1);
+            border-radius: 15px;
+            background: rgba(255, 252, 246, 0.94);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-title {
+            margin-bottom: 9px;
+            color: #25231f;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #625e57;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .legend-swatch {
+            width: 18px;
+            height: 5px;
+            border-radius: 4px;
         }
 
         /* =========================
@@ -418,6 +508,22 @@
                 font-size: 23px;
             }
 
+            .map-tools {
+                top: auto;
+                right: 14px;
+                bottom: 76px;
+            }
+
+            .map-tool {
+                min-height: 36px;
+                padding: 0 10px;
+                font-size: 11px;
+            }
+
+            .map-legend {
+                display: none;
+            }
+
             .journey-video {
                 right: 14px;
                 bottom: 14px;
@@ -451,6 +557,11 @@
             Ilhan et Flamby.
         </p>
 
+        <div class="header-meta">
+            <span id="stepCount">Chargement...</span>
+            <span id="routeStatus">Parcours en cours</span>
+        </div>
+
     </div>
 
     <!-- Compteur -->
@@ -461,10 +572,20 @@
         </span>
 
         <span class="progress-label">
-            jour sur 31
+            jours parcourus
         </span>
 
     </div>
+
+    <div class="map-tools" aria-label="Outils de carte">
+        <button class="map-tool" id="fitJourney" type="button">Voir le voyage</button>
+        <button class="map-tool" id="locateLatest" type="button">Dernière étape</button>
+    </div>
+
+    <aside class="map-legend" aria-label="Légende des jours">
+        <div class="legend-title">Couleurs des jours</div>
+        <div class="legend-items" id="legendItems"></div>
+    </aside>
 
     <!-- Résumé vidéo affiché au survol d'un trajet -->
     <aside class="journey-video" id="journeyVideo" aria-hidden="true">
@@ -523,6 +644,30 @@
         L.control.zoom({
             position: "bottomright"
         }).addTo(map);
+
+        let journeyBounds = null;
+        let latestCoordinate = null;
+
+        document
+            .getElementById("fitJourney")
+            .addEventListener("click", () => {
+                if (journeyBounds) {
+                    map.fitBounds(journeyBounds, {
+                        paddingTopLeft: [50, 150],
+                        paddingBottomRight: [50, 100]
+                    });
+                }
+            });
+
+        document
+            .getElementById("locateLatest")
+            .addEventListener("click", () => {
+                if (latestCoordinate) {
+                    map.flyTo(latestCoordinate, 10, {
+                        duration: 0.8
+                    });
+                }
+            });
 
 
         /* ==================================================
@@ -1166,6 +1311,22 @@
                 "#77716a"
             ];
 
+            const daysPresent = [...new Set(etapes.map(etape => Number(etape.jour)))];
+            const legendItems = document.getElementById("legendItems");
+
+            legendItems.innerHTML = daysPresent.map(day => `
+                <div class="legend-item">
+                    <span class="legend-swatch" style="background:${dayColors[(day - 1) % dayColors.length]}"></span>
+                    <span>Jour ${escapeHTML(day)}</span>
+                </div>
+            `).join("");
+
+            document.getElementById("stepCount").textContent =
+                `${etapes.length} étapes`;
+
+            document.getElementById("routeStatus").textContent =
+                `${daysPresent.length} jours cartographiés`;
+
             const routeColors = etapes.slice(0, -1).map(etape => {
 
                 const day = Number(etape.jour);
@@ -1190,11 +1351,15 @@
             currentDay.textContent =
                 etapes[latestIndex].jour;
 
+            latestCoordinate = coordinates[latestIndex];
+
 
             if (coordinates.length > 1) {
 
                 const bounds =
                     L.latLngBounds(coordinates);
+
+                journeyBounds = bounds;
 
 
                 map.fitBounds(
