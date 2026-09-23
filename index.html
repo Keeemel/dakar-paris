@@ -400,16 +400,6 @@
 
     <script>
 
-        /* ==================================================
-           CONFIGURATION SUPABASE
-        ================================================== */
-
-        const SUPABASE_URL =
-            "https://TON-PROJET.supabase.co";
-
-        const SUPABASE_KEY =
-            "TON-SB-PUBLISHABLE-KEY";
-
 
         /* ==================================================
            CARTE
@@ -563,6 +553,21 @@
            RECUPERATION DES DONNEES
         ================================================== */
 
+        // ==================================================
+        // CONFIGURATION SUPABASE
+        // ==================================================
+
+        const SUPABASE_URL =
+            "https://cehgwqrcwptcemrvcayt.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable__JEHsgV2wCvzH9xGDvwWxA_Cnh07uJp";
+
+
+        // ==================================================
+        // CHARGEMENT DU PARCOURS
+        // ==================================================
+
         async function loadJourney() {
 
             const loading =
@@ -570,27 +575,49 @@
 
             try {
 
+                // URL de l'API Supabase
                 const url =
                     `${SUPABASE_URL}/rest/v1/etapes` +
                     `?select=jour,latitude,longitude,titre,description,date` +
                     `&order=jour.asc`;
 
 
+                console.log("Chargement des étapes...");
+
+
+                // Requête vers Supabase
                 const response = await fetch(url, {
+
+                    method: "GET",
 
                     headers: {
 
+                        // Clé publique Supabase
                         "apikey": SUPABASE_KEY,
 
+                        // Authentification de la requête
                         "Authorization":
-                            `Bearer ${SUPABASE_KEY}`
+                            `Bearer ${SUPABASE_KEY}`,
+
+                        // On demande du JSON
+                        "Content-Type":
+                            "application/json"
 
                     }
 
                 });
 
 
+                // Vérification de la réponse
                 if (!response.ok) {
+
+                    const errorText =
+                        await response.text();
+
+                    console.error(
+                        "Réponse Supabase :",
+                        errorText
+                    );
 
                     throw new Error(
                         `Erreur API : ${response.status}`
@@ -599,31 +626,92 @@
                 }
 
 
-                const etapes = await response.json();
+                // Conversion de la réponse en JSON
+                const etapes =
+                    await response.json();
 
 
-                if (!etapes.length) {
+                console.log(
+                    "Étapes récupérées :",
+                    etapes
+                );
+
+
+                // Vérifie qu'il y a au moins une étape
+                if (!Array.isArray(etapes) ||
+                    etapes.length === 0) {
 
                     throw new Error(
-                        "Aucune étape trouvée."
+                        "Aucune étape trouvée dans la table Supabase."
                     );
 
                 }
 
 
-                displayJourney(etapes);
+                // Vérifie que les coordonnées sont valides
+                const etapesValides =
+                    etapes.filter(etape => {
+
+                        return (
+                            etape.latitude !== null &&
+                            etape.longitude !== null &&
+                            !isNaN(Number(etape.latitude)) &&
+                            !isNaN(Number(etape.longitude))
+                        );
+
+                    });
 
 
+                if (etapesValides.length === 0) {
+
+                    throw new Error(
+                        "Aucune étape ne possède de coordonnées valides."
+                    );
+
+                }
+
+
+                // Affiche le parcours sur la carte
+                displayJourney(etapesValides);
+
+
+                // Cache l'écran de chargement
                 loading.classList.add("hidden");
 
 
             } catch (error) {
 
-                console.error(error);
+                console.error(
+                    "Erreur lors du chargement :",
+                    error
+                );
 
+
+                // Affiche une erreur à l'utilisateur
                 loading.innerHTML = `
+
+            <div style="
+                text-align: center;
+                padding: 30px;
+            ">
+
+                <strong>
                     Impossible de charger le parcours.
-                `;
+                </strong>
+
+                <br>
+
+                <small style="
+                    display: block;
+                    margin-top: 8px;
+                    opacity: 0.65;
+                ">
+                    Vérifie la connexion à Supabase.
+                </small>
+
+            </div>
+
+        `;
 
             }
 
