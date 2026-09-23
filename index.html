@@ -1,26 +1,29 @@
-```html
 <!DOCTYPE html>
 <html lang="fr">
 
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Le parcours — Dakar → Paris</title>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
 
     <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
 
     <style>
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -73,8 +76,10 @@
         .eyebrow {
             font-size: 12px;
             font-weight: 800;
+
             text-transform: uppercase;
             letter-spacing: 1.5px;
+
             color: #77716a;
 
             margin-bottom: 4px;
@@ -83,7 +88,9 @@
         .header h1 {
             font-size: 28px;
             line-height: 1;
+
             font-weight: 900;
+
             color: #25231f;
 
             margin-bottom: 8px;
@@ -92,6 +99,7 @@
         .header p {
             font-size: 14px;
             line-height: 1.45;
+
             color: #625e57;
         }
 
@@ -101,6 +109,7 @@
 
         .progress {
             position: fixed;
+
             right: 24px;
             top: 24px;
 
@@ -126,6 +135,7 @@
             line-height: 1;
 
             font-weight: 900;
+
             color: #25231f;
         }
 
@@ -231,6 +241,7 @@
 
         .leaflet-popup-content {
             margin: 0;
+
             width: 260px !important;
         }
 
@@ -343,9 +354,9 @@
                 font-size: 23px;
             }
         }
+
     </style>
 </head>
-
 
 <body>
 
@@ -353,7 +364,6 @@
     <div class="loading" id="loading">
         Le parcours se charge...
     </div>
-
 
     <!-- Header -->
     <div class="header">
@@ -374,7 +384,6 @@
 
     </div>
 
-
     <!-- Compteur -->
     <div class="progress">
 
@@ -388,18 +397,15 @@
 
     </div>
 
-
     <!-- Carte -->
     <div id="map"></div>
 
-
     <!-- Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
     </script>
 
-
     <script>
-
 
         /* ==================================================
            CARTE
@@ -409,7 +415,6 @@
 
             zoomControl: false,
 
-            // Vue initiale entre Dakar et Paris
             center: [22, -5],
 
             zoom: 4
@@ -417,9 +422,7 @@
         });
 
 
-        /* Fond de carte CartoDB
-           Plus doux et minimaliste qu'OpenStreetMap classique.
-        */
+        /* Fond de carte */
 
         L.tileLayer(
             "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -432,7 +435,7 @@
         ).addTo(map);
 
 
-        /* Zoom en bas à droite */
+        /* Zoom */
 
         L.control.zoom({
             position: "bottomright"
@@ -500,12 +503,13 @@
                 )
                 : "";
 
+
             return `
 
                 <div class="popup">
 
                     <div class="popup-day">
-                        Jour ${etape.jour}
+                        Jour ${escapeHTML(etape.jour)}
                     </div>
 
                     <div class="popup-title">
@@ -516,28 +520,32 @@
                         ${escapeHTML(etape.description)}
                     </div>
 
-                    ${date
-                    ? `
+                    ${
+                        date
+                        ? `
                             <div class="popup-date">
                                 ${date}
                             </div>
                         `
-                    : ""
-                }
+                        : ""
+                    }
 
                 </div>
 
             `;
+
         }
 
 
-        /* Petite protection pour les textes venant
-           directement de Supabase.
-        */
+        /* ==================================================
+           PROTECTION HTML
+        ================================================== */
 
         function escapeHTML(text) {
 
-            if (!text) return "";
+            if (text === null || text === undefined) {
+                return "";
+            }
 
             return String(text)
                 .replace(/&/g, "&amp;")
@@ -550,12 +558,8 @@
 
 
         /* ==================================================
-           RECUPERATION DES DONNEES
+           SUPABASE
         ================================================== */
-
-        // ==================================================
-        // CONFIGURATION SUPABASE
-        // ==================================================
 
         const SUPABASE_URL =
             "https://cehgwqrcwptcemrvcayt.supabase.co";
@@ -564,51 +568,50 @@
             "sb_publishable__JEHsgV2wCvzH9xGDvwWxA_Cnh07uJp";
 
 
-        // ==================================================
-        // CHARGEMENT DU PARCOURS
-        // ==================================================
+        /* ==================================================
+           CHARGEMENT DES DONNÉES
+        ================================================== */
 
         async function loadJourney() {
 
             const loading =
                 document.getElementById("loading");
 
+
             try {
 
-                // URL de l'API Supabase
                 const url =
                     `${SUPABASE_URL}/rest/v1/etapes` +
                     `?select=jour,latitude,longitude,titre,description,date` +
-                    `&order=jour.asc`;
+                    `&order=jour.asc,id.asc`;
 
 
-                console.log("Chargement des étapes...");
+                console.log(
+                    "Chargement des étapes..."
+                );
 
 
-                // Requête vers Supabase
-                const response = await fetch(url, {
+                const response = await fetch(
+                    url,
+                    {
+                        method: "GET",
 
-                    method: "GET",
+                        headers: {
 
-                    headers: {
+                            "apikey":
+                                SUPABASE_KEY,
 
-                        // Clé publique Supabase
-                        "apikey": SUPABASE_KEY,
+                            "Authorization":
+                                `Bearer ${SUPABASE_KEY}`,
 
-                        // Authentification de la requête
-                        "Authorization":
-                            `Bearer ${SUPABASE_KEY}`,
+                            "Content-Type":
+                                "application/json"
 
-                        // On demande du JSON
-                        "Content-Type":
-                            "application/json"
-
+                        }
                     }
+                );
 
-                });
 
-
-                // Vérification de la réponse
                 if (!response.ok) {
 
                     const errorText =
@@ -626,7 +629,6 @@
                 }
 
 
-                // Conversion de la réponse en JSON
                 const etapes =
                     await response.json();
 
@@ -637,26 +639,30 @@
                 );
 
 
-                // Vérifie qu'il y a au moins une étape
-                if (!Array.isArray(etapes) ||
-                    etapes.length === 0) {
+                if (
+                    !Array.isArray(etapes) ||
+                    etapes.length === 0
+                ) {
 
                     throw new Error(
-                        "Aucune étape trouvée dans la table Supabase."
+                        "Aucune étape trouvée."
                     );
 
                 }
 
 
-                // Vérifie que les coordonnées sont valides
                 const etapesValides =
                     etapes.filter(etape => {
 
                         return (
                             etape.latitude !== null &&
                             etape.longitude !== null &&
-                            !isNaN(Number(etape.latitude)) &&
-                            !isNaN(Number(etape.longitude))
+                            !isNaN(
+                                Number(etape.latitude)
+                            ) &&
+                            !isNaN(
+                                Number(etape.longitude)
+                            )
                         );
 
                     });
@@ -665,18 +671,20 @@
                 if (etapesValides.length === 0) {
 
                     throw new Error(
-                        "Aucune étape ne possède de coordonnées valides."
+                        "Aucune coordonnée valide."
                     );
 
                 }
 
 
-                // Affiche le parcours sur la carte
-                displayJourney(etapesValides);
+                await displayJourney(
+                    etapesValides
+                );
 
 
-                // Cache l'écran de chargement
-                loading.classList.add("hidden");
+                loading.classList.add(
+                    "hidden"
+                );
 
 
             } catch (error) {
@@ -687,31 +695,30 @@
                 );
 
 
-                // Affiche une erreur à l'utilisateur
                 loading.innerHTML = `
 
-            <div style="
-                text-align: center;
-                padding: 30px;
-            ">
+                    <div style="
+                        text-align: center;
+                        padding: 30px;
+                    ">
 
-                <strong>
-                    Impossible de charger le parcours.
-                </strong>
+                        <strong>
+                            Impossible de charger le parcours.
+                        </strong>
 
-                <br>
+                        <br>
 
-                <small style="
-                    display: block;
-                    margin-top: 8px;
-                    opacity: 0.65;
-                ">
-                    Vérifie la connexion à Supabase.
-                </small>
+                        <small style="
+                            display: block;
+                            margin-top: 8px;
+                            opacity: 0.65;
+                        ">
+                            Vérifie la connexion à Supabase.
+                        </small>
 
-            </div>
+                    </div>
 
-        `;
+                `;
 
             }
 
@@ -719,110 +726,292 @@
 
 
         /* ==================================================
-           AFFICHAGE DU PARCOURS
+           CALCUL DU TRAJET ROUTIER
         ================================================== */
 
-        function displayJourney(etapes) {
+        async function drawRoute(coordinates) {
+
+            if (coordinates.length < 2) {
+                return;
+            }
+
+
+            console.log(
+                "Calcul du trajet routier..."
+            );
+
+
+            /*
+             * On calcule chaque segment séparément :
+             *
+             * Dakar → Decathlon
+             * Decathlon → Lac Rose
+             * Lac Rose → Thiès
+             * Thiès → Kébémer
+             * etc.
+             */
+
+            for (
+                let i = 0;
+                i < coordinates.length - 1;
+                i++
+            ) {
+
+                const start =
+                    coordinates[i];
+
+                const end =
+                    coordinates[i + 1];
+
+
+                const startLat =
+                    start[0];
+
+                const startLng =
+                    start[1];
+
+                const endLat =
+                    end[0];
+
+                const endLng =
+                    end[1];
+
+
+                const url =
+                    "https://router.project-osrm.org/route/v1/driving/" +
+                    `${startLng},${startLat};` +
+                    `${endLng},${endLat}` +
+                    "?overview=full&geometries=geojson";
+
+
+                try {
+
+                    const response =
+                        await fetch(url);
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            `OSRM HTTP ${response.status}`
+                        );
+
+                    }
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (
+                        data.code !== "Ok" ||
+                        !data.routes ||
+                        !data.routes.length
+                    ) {
+
+                        throw new Error(
+                            "Aucune route trouvée."
+                        );
+
+                    }
+
+
+                    const geometry =
+                        data.routes[0].geometry;
+
+
+                    /*
+                     * On dessine la vraie géométrie
+                     * de la route.
+                     */
+
+                    L.geoJSON(
+                        geometry,
+                        {
+                            style: {
+
+                                color: "#25231f",
+
+                                weight: 3,
+
+                                opacity: 0.75,
+
+                                dashArray: "7 10",
+
+                                lineCap: "round",
+
+                                lineJoin: "round"
+
+                            }
+                        }
+                    ).addTo(map);
+
+
+                } catch (error) {
+
+                    console.warn(
+                        `Impossible de calculer le segment ${i + 1}`,
+                        error
+                    );
+
+
+                    /*
+                     * Si OSRM ne trouve pas la route,
+                     * on garde une ligne directe.
+                     */
+
+                    L.polyline(
+                        [start, end],
+                        {
+
+                            color: "#25231f",
+
+                            weight: 3,
+
+                            opacity: 0.45,
+
+                            dashArray: "7 10",
+
+                            lineCap: "round",
+
+                            lineJoin: "round"
+
+                        }
+                    ).addTo(map);
+
+                }
+
+            }
+
+
+            console.log(
+                "Trajet terminé."
+            );
+
+        }
+
+
+        /* ==================================================
+           AFFICHAGE
+        ================================================== */
+
+        async function displayJourney(etapes) {
 
             const coordinates = [];
+
 
             const latestIndex =
                 etapes.length - 1;
 
 
-            etapes.forEach((etape, index) => {
+            /* =========================
+               MARQUEURS
+            ========================= */
 
-                const lat =
-                    Number(etape.latitude);
+            etapes.forEach(
+                (etape, index) => {
 
-                const lng =
-                    Number(etape.longitude);
+                    const lat =
+                        Number(
+                            etape.latitude
+                        );
+
+                    const lng =
+                        Number(
+                            etape.longitude
+                        );
 
 
-                coordinates.push([lat, lng]);
-
-
-                const isCurrent =
-                    index === latestIndex;
-
-
-                const marker =
-                    L.marker(
-                        [lat, lng],
-                        {
-                            icon: isCurrent
-                                ? createCurrentIcon()
-                                : createNormalIcon(),
-
-                            zIndexOffset:
-                                isCurrent ? 1000 : 0
-                        }
+                    coordinates.push(
+                        [lat, lng]
                     );
 
 
-                marker
-                    .bindPopup(
-                        createPopup(etape),
-                        {
-                            closeButton: true
-                        }
-                    )
-                    .addTo(map);
-
-            });
+                    const isCurrent =
+                        index === latestIndex;
 
 
-            /* ==================================================
-               TRACE EN POINTILLÉS
-            ================================================== */
+                    const marker =
+                        L.marker(
+                            [lat, lng],
+                            {
 
-            L.polyline(
-                coordinates,
-                {
+                                icon:
+                                    isCurrent
+                                    ? createCurrentIcon()
+                                    : createNormalIcon(),
 
-                    color: "#25231f",
+                                zIndexOffset:
+                                    isCurrent
+                                    ? 1000
+                                    : 0
 
-                    weight: 3,
+                            }
+                        );
 
-                    opacity: 0.75,
 
-                    dashArray: "7 10",
-
-                    lineCap: "round",
-
-                    lineJoin: "round"
+                    marker
+                        .bindPopup(
+                            createPopup(etape),
+                            {
+                                closeButton: true
+                            }
+                        )
+                        .addTo(map);
 
                 }
-            ).addTo(map);
+            );
 
 
-            /* ==================================================
+            /* =========================
+               TRAJET ROUTIER
+            ========================= */
+
+            await drawRoute(
+                coordinates
+            );
+
+
+            /* =========================
                COMPTEUR
-            ================================================== */
+            ========================= */
 
             const currentDay =
-                document.getElementById("currentDay");
+                document.getElementById(
+                    "currentDay"
+                );
+
 
             currentDay.textContent =
                 etapes[latestIndex].jour;
 
 
-            /* ==================================================
-               CADRAGE AUTOMATIQUE
-            ================================================== */
+            /* =========================
+               CADRAGE
+            ========================= */
 
-            if (coordinates.length > 1) {
+            if (
+                coordinates.length > 1
+            ) {
 
                 const bounds =
-                    L.latLngBounds(coordinates);
+                    L.latLngBounds(
+                        coordinates
+                    );
 
-                map.fitBounds(bounds, {
 
-                    paddingTopLeft: [50, 130],
+                map.fitBounds(
+                    bounds,
+                    {
 
-                    paddingBottomRight: [50, 80]
+                        paddingTopLeft:
+                            [50, 130],
 
-                });
+                        paddingBottomRight:
+                            [50, 80]
+
+                    }
+                );
 
             } else {
 
@@ -847,4 +1036,3 @@
 </body>
 
 </html>
-```
