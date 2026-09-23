@@ -936,7 +936,7 @@
                 const weatherLabel = stepData?.jour
                     ? `Météo du jour ${stepData.jour}`
                     : "Météo de l’étape";
-            
+
                 const weatherDateLabel = (stepData?.date || weatherDate)
                     ? formatWeatherDate(stepData?.date || weatherDate)
                     : "date estimée";
@@ -966,17 +966,17 @@
                     </div>
                     <div class="weather-forecast">
                         ${(weather.hourly?.time || []).slice(0, 4).map((time, index) => {
-                            const hourlyCode = weather.hourly.weather_code[index];
-                            const hourlyDescription = getWeatherDescription(hourlyCode);
-                            const hourlyTemp = weather.hourly.temperature_2m[index];
-                            return `
+                    const hourlyCode = weather.hourly.weather_code[index];
+                    const hourlyDescription = getWeatherDescription(hourlyCode);
+                    const hourlyTemp = weather.hourly.temperature_2m[index];
+                    return `
                                 <div class="forecast-day">
                                     ${new Date(time).toLocaleTimeString("fr-FR", { hour: "2-digit" }).replace(":00", "h")}
                                     <span class="forecast-icon" aria-hidden="true">${hourlyDescription[1]}</span>
                                     <span class="forecast-temperatures">${Math.round(hourlyTemp)}°</span>
                                 </div>
                             `;
-                        }).join("")}
+                }).join("")}
                     </div>
                 `;
 
