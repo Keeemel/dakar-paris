@@ -1350,7 +1350,7 @@
 
                 const url =
                     `${SUPABASE_URL}/rest/v1/etapes` +
-                    `?select=jour,latitude,longitude,titre,description,date` +
+                    `?select=id,jour,latitude,longitude,titre,description,date` +
                     `&order=jour.asc,id.asc`;
 
 
@@ -1707,7 +1707,30 @@
 
         async function displayJourney(etapes) {
 
-            const latestIndex = etapes.length - 1;
+            const FIXED_NEXT_STEP_ID = 1000;
+
+            const currentStep =
+                etapes
+                    .filter(step => Number(step.id) !== FIXED_NEXT_STEP_ID)
+                    .sort((a, b) => Number(b.id) - Number(a.id))[0] ||
+                etapes[etapes.length - 1] ||
+                null;
+
+            const latestIndex = currentStep
+                ? etapes.findIndex(step => Number(step.id) === Number(currentStep.id))
+                : etapes.length - 1;
+
+            const nextStep =
+                etapes.find(step => Number(step.id) === FIXED_NEXT_STEP_ID) ||
+                null;
+
+            const currentPoint = currentStep
+                ? [Number(currentStep.latitude), Number(currentStep.longitude)]
+                : null;
+
+            const nextPoint = nextStep
+                ? [Number(nextStep.latitude), Number(nextStep.longitude)]
+                : null;
 
             /*
              * Marqueurs
@@ -1722,7 +1745,7 @@
 
 
                 const isCurrent =
-                    index === latestIndex;
+                    Number(etape.id) === Number(currentStep?.id);
 
 
                 const marker =
@@ -1780,6 +1803,13 @@
                 Number(etape.longitude)
             ]);
 
+            const routeCoordinates = etapes
+                .filter(etape => Number(etape.id) !== FIXED_NEXT_STEP_ID)
+                .map(etape => [
+                    Number(etape.latitude),
+                    Number(etape.longitude)
+                ]);
+
             const dayColors = [
                 "#e35d3f",
                 "#3f7cac",
@@ -1791,7 +1821,11 @@
                 "#77716a"
             ];
 
-            const daysPresent = [...new Set(etapes.map(etape => Number(etape.jour)))];
+            const daysPresent = [...new Set(
+                etapes
+                    .filter(etape => Number(etape.jour) > 0)
+                    .map(etape => Number(etape.jour))
+            )];
             const legendItems = document.getElementById("legendItems");
 
             legendItems.innerHTML = daysPresent.map(day => `
@@ -1801,24 +1835,34 @@
                 </div>
             `).join("");
 
+            if (nextStep && Number(nextStep.jour) === 0) {
+                legendItems.innerHTML += `
+                    <div class="legend-item">
+                        <span class="legend-swatch" style="background:#8e8a84"></span>
+                        <span>Prochaine étape</span>
+                    </div>
+                `;
+            }
+
             document.getElementById("stepCount").textContent =
                 `${etapes.length} étapes`;
 
             document.getElementById("routeStatus").textContent =
                 `${daysPresent.length} jours cartographiés`;
 
-            const routeColors = etapes.slice(0, -1).map(etape => {
-
-                const day = Number(etape.jour);
+            const routeColors = routeCoordinates.slice(0, -1).map((_, index) => {
+                const etape = etapes.filter(step => Number(step.id) !== FIXED_NEXT_STEP_ID)[index];
+                const day = Number(etape?.jour || 0);
+                const isNeutral = day === 0 || Number(etape?.id) === FIXED_NEXT_STEP_ID;
 
                 return {
                     day,
-                    color: dayColors[(day - 1) % dayColors.length]
+                    color: isNeutral ? "#8e8a84" : dayColors[(day - 1) % dayColors.length]
                 };
 
             });
 
-            await drawRoute(coordinates, routeColors);
+            await drawRoute(routeCoordinates, routeColors);
 
 
             /*
@@ -1827,30 +1871,18 @@
             const currentDay =
                 document.getElementById("currentDay");
 
-
             currentDay.textContent =
-                etapes[latestIndex].jour;
+                currentStep?.jour ?? etapes[latestIndex]?.jour ?? "";
 
-            latestCoordinate = coordinates[latestIndex];
+            const latestCoordinateValue = currentPoint || coordinates[latestIndex] || coordinates[coordinates.length - 1] || null;
 
-            const FIXED_NEXT_STEP_ID = 1000;
-            const nextStep = etapes.find(step => Number(step.id) === FIXED_NEXT_STEP_ID) || null;
+            latestCoordinate = latestCoordinateValue;
 
-            if (nextStep && coordinates.length > 1) {
-                const currentPoint = latestCoordinate;
-                const nextPoint = [Number(nextStep.latitude), Number(nextStep.longitude)];
-
-                L.polyline(
+            if (currentPoint && nextPoint && coordinates.length > 1) {
+                await drawRoute(
                     [currentPoint, nextPoint],
-                    {
-                        color: "#8e8a84",
-                        weight: 2,
-                        opacity: 0.75,
-                        dashArray: "6 8",
-                        lineCap: "round",
-                        lineJoin: "round"
-                    }
-                ).addTo(map);
+                    [{ day: 0, color: "#8e8a84" }]
+                );
 
                 const nextStepMarker = L.marker(nextPoint, {
                     icon: createNextStepIcon(),
@@ -1867,9 +1899,9 @@
             }
 
             loadWeather(
-                latestCoordinate,
-                etapes[latestIndex].titre,
-                etapes[latestIndex]
+                latestCoordinateValue,
+                currentStep?.titre ?? etapes[latestIndex]?.titre ?? "Position actuelle",
+                currentStep ?? etapes[latestIndex]
             );
 
 
