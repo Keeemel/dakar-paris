@@ -11,19 +11,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <!-- Leaflet -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <style>
-
         * {
             box-sizing: border-box;
             margin: 0;
@@ -430,7 +424,6 @@
                 width: calc(100vw - 28px);
             }
         }
-
     </style>
 </head>
 
@@ -478,15 +471,13 @@
 
         <div class="journey-video-header">
             <span class="journey-video-title" id="journeyVideoTitle"></span>
-            <button class="journey-video-close" id="journeyVideoClose" type="button" title="Fermer la vidéo" aria-label="Fermer la vidéo">
+            <button class="journey-video-close" id="journeyVideoClose" type="button" title="Fermer la vidéo"
+                aria-label="Fermer la vidéo">
                 ×
             </button>
         </div>
 
-        <iframe
-            class="journey-video-frame"
-            id="journeyVideoFrame"
-            title="Résumé vidéo du jour"
+        <iframe class="journey-video-frame" id="journeyVideoFrame" title="Résumé vidéo du jour"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen>
         </iframe>
@@ -497,8 +488,7 @@
     <div id="map"></div>
 
     <!-- Leaflet -->
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
     </script>
 
     <script>
@@ -522,10 +512,10 @@
 
         L.tileLayer(
             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19
-        }
+            {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }
         ).addTo(map);
 
         /* Zoom */
@@ -613,15 +603,14 @@
                         ${escapeHTML(etape.description)}
                     </div>
 
-                    ${
-                        date
-                        ? `
+                    ${date
+                    ? `
                             <div class="popup-date">
                                 ${date}
                             </div>
                         `
-                        : ""
-                    }
+                    : ""
+                }
 
                 </div>
 
@@ -1100,125 +1089,125 @@
 
         async function displayJourney(etapes) {
 
-    const latestIndex = etapes.length - 1;
+            const latestIndex = etapes.length - 1;
 
-    /*
-     * Marqueurs
-     */
-    etapes.forEach((etape, index) => {
+            /*
+             * Marqueurs
+             */
+            etapes.forEach((etape, index) => {
 
-        const lat =
-            Number(etape.latitude);
+                const lat =
+                    Number(etape.latitude);
 
-        const lng =
-            Number(etape.longitude);
-
-
-        const isCurrent =
-            index === latestIndex;
+                const lng =
+                    Number(etape.longitude);
 
 
-        const marker =
-            L.marker(
-                [lat, lng],
-                {
-
-                    icon:
-                        isCurrent
-                            ? createCurrentIcon()
-                            : createNormalIcon(),
-
-                    zIndexOffset:
-                        isCurrent
-                            ? 1000
-                            : 0
-
-                }
-            );
+                const isCurrent =
+                    index === latestIndex;
 
 
-        marker
-            .bindPopup(
-                createPopup(etape),
-                {
-                    closeButton: true
-                }
-            )
-            .addTo(map);
+                const marker =
+                    L.marker(
+                        [lat, lng],
+                        {
+
+                            icon:
+                                isCurrent
+                                    ? createCurrentIcon()
+                                    : createNormalIcon(),
+
+                            zIndexOffset:
+                                isCurrent
+                                    ? 1000
+                                    : 0
+
+                        }
+                    );
 
 
-        /*
-         * Animation d'apparition
-         */
-        setTimeout(() => {
-
-            marker.getElement()?.classList.add(
-                "marker-visible"
-            );
-
-        }, index * 100);
-
-    });
+                marker
+                    .bindPopup(
+                        createPopup(etape),
+                        {
+                            closeButton: true
+                        }
+                    )
+                    .addTo(map);
 
 
-    const coordinates = etapes.map(etape => [
-        Number(etape.latitude),
-        Number(etape.longitude)
-    ]);
+                /*
+                 * Animation d'apparition
+                 */
+                setTimeout(() => {
 
-    const dayColors = [
-        "#e35d3f",
-        "#3f7cac",
-        "#5f8f5f",
-        "#8b6fa8",
-        "#c28b45",
-        "#2f8f9d",
-        "#b76565",
-        "#77716a"
-    ];
+                    marker.getElement()?.classList.add(
+                        "marker-visible"
+                    );
 
-    const routeColors = etapes.slice(0, -1).map(etape => {
+                }, index * 100);
 
-        const day = Number(etape.jour);
-
-        return {
-            day,
-            color: dayColors[(day - 1) % dayColors.length]
-        };
-
-    });
-
-    await drawRoute(coordinates, routeColors);
+            });
 
 
-    /*
-     * Compteur
-     */
-    const currentDay =
-        document.getElementById("currentDay");
+            const coordinates = etapes.map(etape => [
+                Number(etape.latitude),
+                Number(etape.longitude)
+            ]);
+
+            const dayColors = [
+                "#e35d3f",
+                "#3f7cac",
+                "#5f8f5f",
+                "#8b6fa8",
+                "#c28b45",
+                "#2f8f9d",
+                "#b76565",
+                "#77716a"
+            ];
+
+            const routeColors = etapes.slice(0, -1).map(etape => {
+
+                const day = Number(etape.jour);
+
+                return {
+                    day,
+                    color: dayColors[(day - 1) % dayColors.length]
+                };
+
+            });
+
+            await drawRoute(coordinates, routeColors);
 
 
-    currentDay.textContent =
-        etapes[latestIndex].jour;
+            /*
+             * Compteur
+             */
+            const currentDay =
+                document.getElementById("currentDay");
 
 
-    if (coordinates.length > 1) {
-
-        const bounds =
-            L.latLngBounds(coordinates);
+            currentDay.textContent =
+                etapes[latestIndex].jour;
 
 
-        map.fitBounds(
-            bounds,
-            {
-                paddingTopLeft: [50, 150],
-                paddingBottomRight: [50, 100]
+            if (coordinates.length > 1) {
+
+                const bounds =
+                    L.latLngBounds(coordinates);
+
+
+                map.fitBounds(
+                    bounds,
+                    {
+                        paddingTopLeft: [50, 150],
+                        paddingBottomRight: [50, 100]
+                    }
+                );
+
             }
-        );
 
-    }
-
-}
+        }
 
 
         /* ==================================================
