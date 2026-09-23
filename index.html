@@ -894,71 +894,175 @@
 
         async function displayJourney(etapes) {
 
-            const coordinates = [];
+    const latestIndex = etapes.length - 1;
+
+    /*
+     * Palette des journées
+     */
+    const dayColors = [
+        "#e35d3f", // orange
+        "#4f7cac", // bleu
+        "#6b8e5a", // vert
+        "#8b6fa8", // violet
+        "#c28b45", // jaune/brun
+        "#5f8f8f", // turquoise
+        "#b76565", // rouge doux
+        "#77716a"  // gris
+    ];
 
 
-            const latestIndex =
-                etapes.length - 1;
+    /*
+     * Regrouper les points par journée
+     */
+    const days = {};
+
+    etapes.forEach((etape) => {
+
+        const day = Number(etape.jour);
+
+        if (!days[day]) {
+            days[day] = [];
+        }
+
+        days[day].push([
+            Number(etape.latitude),
+            Number(etape.longitude)
+        ]);
+
+    });
 
 
-            /* =========================
-               MARQUEURS
-            ========================= */
-
-            etapes.forEach(
-                (etape, index) => {
-
-                    const lat =
-                        Number(
-                            etape.latitude
-                        );
-
-                    const lng =
-                        Number(
-                            etape.longitude
-                        );
+    /*
+     * Dessiner les trajets journée par journée
+     */
+    const routePromises = [];
 
 
-                    coordinates.push(
-                        [lat, lng]
-                    );
+    Object.keys(days).forEach((day) => {
+
+        const coordinates = days[day];
+
+        if (coordinates.length < 2) {
+            return;
+        }
+
+        const color =
+            dayColors[(Number(day) - 1) % dayColors.length];
 
 
-                    const isCurrent =
-                        index === latestIndex;
+        routePromises.push(
+            drawDayRoute(
+                coordinates,
+                color
+            )
+        );
+
+    });
 
 
-                    const marker =
-                        L.marker(
-                            [lat, lng],
-                            {
+    /*
+     * Marqueurs
+     */
+    etapes.forEach((etape, index) => {
 
-                                icon:
-                                    isCurrent
-                                    ? createCurrentIcon()
-                                    : createNormalIcon(),
+        const lat =
+            Number(etape.latitude);
 
-                                zIndexOffset:
-                                    isCurrent
-                                    ? 1000
-                                    : 0
-
-                            }
-                        );
+        const lng =
+            Number(etape.longitude);
 
 
-                    marker
-                        .bindPopup(
-                            createPopup(etape),
-                            {
-                                closeButton: true
-                            }
-                        )
-                        .addTo(map);
+        const isCurrent =
+            index === latestIndex;
+
+
+        const marker =
+            L.marker(
+                [lat, lng],
+                {
+
+                    icon:
+                        isCurrent
+                            ? createCurrentIcon()
+                            : createNormalIcon(),
+
+                    zIndexOffset:
+                        isCurrent
+                            ? 1000
+                            : 0
 
                 }
             );
 
+
+        marker
+            .bindPopup(
+                createPopup(etape),
+                {
+                    closeButton: true
+                }
+            )
+            .addTo(map);
+
+
+        /*
+         * Animation d'apparition
+         */
+        setTimeout(() => {
+
+            marker.getElement()?.classList.add(
+                "marker-visible"
+            );
+
+        }, index * 100);
+
+    });
+
+
+    /*
+     * Attendre que les routes soient calculées
+     */
+    await Promise.all(routePromises);
+
+
+    /*
+     * Compteur
+     */
+    const currentDay =
+        document.getElementById("currentDay");
+
+
+    currentDay.textContent =
+        etapes[latestIndex].jour;
+
+
+    /*
+     * Cadrage
+     */
+    const coordinates =
+        etapes.map(etape => [
+            Number(etape.latitude),
+            Number(etape.longitude)
+        ]);
+
+
+    if (coordinates.length > 1) {
+
+        const bounds =
+            L.latLngBounds(coordinates);
+
+
+        map.fitBounds(
+            bounds,
+            {
+                paddingTopLeft: [50, 150],
+                paddingBottomRight: [50, 100]
+            }
+        );
+
+    }
+
+}
 
             /* =========================
                TRAJET ROUTIER
