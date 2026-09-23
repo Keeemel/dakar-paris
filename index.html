@@ -319,6 +319,76 @@
         }
 
         /* =========================
+           VIDÉO DU JOUR
+        ========================= */
+
+        .journey-video {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 1200;
+            width: min(360px, calc(100vw - 48px));
+            padding: 12px;
+            background: rgba(255, 252, 246, 0.96);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(37, 35, 31, 0.12);
+            border-radius: 18px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .journey-video.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .journey-video-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 2px 9px;
+        }
+
+        .journey-video-title {
+            font-size: 13px;
+            font-weight: 900;
+            color: #25231f;
+        }
+
+        .journey-video-close {
+            display: grid;
+            width: 26px;
+            height: 26px;
+            place-items: center;
+            border: 0;
+            border-radius: 50%;
+            background: #eee8de;
+            color: #25231f;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .journey-video-close:hover {
+            background: #e35d3f;
+            color: #fff;
+        }
+
+        .journey-video-frame {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 0;
+            border-radius: 11px;
+            background: #25231f;
+        }
+
+        /* =========================
            MOBILE
         ========================= */
 
@@ -352,6 +422,12 @@
 
             .progress-number {
                 font-size: 23px;
+            }
+
+            .journey-video {
+                right: 14px;
+                bottom: 14px;
+                width: calc(100vw - 28px);
             }
         }
 
@@ -396,6 +472,26 @@
         </span>
 
     </div>
+
+    <!-- Résumé vidéo affiché au survol d'un trajet -->
+    <aside class="journey-video" id="journeyVideo" aria-hidden="true">
+
+        <div class="journey-video-header">
+            <span class="journey-video-title" id="journeyVideoTitle"></span>
+            <button class="journey-video-close" id="journeyVideoClose" type="button" title="Fermer la vidéo" aria-label="Fermer la vidéo">
+                ×
+            </button>
+        </div>
+
+        <iframe
+            class="journey-video-frame"
+            id="journeyVideoFrame"
+            title="Résumé vidéo du jour"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+        </iframe>
+
+    </aside>
 
     <!-- Carte -->
     <div id="map"></div>
@@ -564,6 +660,74 @@
         const SUPABASE_KEY =
             "sb_publishable__JEHsgV2wCvzH9xGDvwWxA_Cnh07uJp";
 
+        const journeyVideos = {
+            1: "https://www.youtube.com/embed/DSiLnk5AlCE?autoplay=1&rel=0",
+            2: "https://www.youtube.com/embed/KTS0wMOnNsc?autoplay=1&rel=0"
+        };
+
+        const journeyVideo =
+            document.getElementById("journeyVideo");
+
+        const journeyVideoFrame =
+            document.getElementById("journeyVideoFrame");
+
+        const journeyVideoTitle =
+            document.getElementById("journeyVideoTitle");
+
+        let videoHideTimer;
+
+        function showJourneyVideo(day) {
+
+            const videoUrl = journeyVideos[day];
+
+            if (!videoUrl) {
+                return;
+            }
+
+            clearTimeout(videoHideTimer);
+
+            journeyVideoTitle.textContent =
+                `Résumé vidéo — jour ${day}`;
+
+            if (journeyVideoFrame.src !== videoUrl) {
+                journeyVideoFrame.src = videoUrl;
+            }
+
+            journeyVideo.classList.add("visible");
+            journeyVideo.setAttribute("aria-hidden", "false");
+
+        }
+
+        function hideJourneyVideo() {
+
+            clearTimeout(videoHideTimer);
+
+            journeyVideo.classList.remove("visible");
+            journeyVideo.setAttribute("aria-hidden", "true");
+            journeyVideoFrame.src = "";
+
+        }
+
+        function scheduleVideoHide() {
+
+            clearTimeout(videoHideTimer);
+
+            videoHideTimer = setTimeout(() => {
+                hideJourneyVideo();
+            }, 180);
+
+        }
+
+        journeyVideo.addEventListener("mouseenter", () => {
+            clearTimeout(videoHideTimer);
+        });
+
+        journeyVideo.addEventListener("mouseleave", scheduleVideoHide);
+
+        document
+            .getElementById("journeyVideoClose")
+            .addEventListener("click", hideJourneyVideo);
+
 
         /* ==================================================
            CHARGEMENT DES DONNÉES
@@ -726,7 +890,7 @@
            CALCUL DU TRAJET ROUTIER
         ================================================== */
 
-        async function drawRoute(coordinates) {
+        async function drawRoute(coordinates, routeColors) {
 
             if (coordinates.length < 2) {
                 return;
@@ -772,6 +936,12 @@
 
                 const endLng =
                     end[1];
+
+                const route =
+                    routeColors[i] || { color: "#25231f" };
+
+                const color =
+                    route.color;
 
 
                 const url =
@@ -822,18 +992,18 @@
                      * de la route.
                      */
 
-                    L.geoJSON(
+                    const routeLayer = L.geoJSON(
                         geometry,
                         {
                             style: {
 
-                                color: "#25231f",
+                                color,
 
-                                weight: 3,
+                                weight: 5,
 
-                                opacity: 0.75,
+                                opacity: 0.92,
 
-                                dashArray: "7 10",
+                                dashArray: "10 7",
 
                                 lineCap: "round",
 
@@ -842,6 +1012,24 @@
                             }
                         }
                     ).addTo(map);
+
+                    if (routeColors[i] && routeColors[i].day) {
+                        routeLayer.on("mouseover", () => {
+                            routeLayer.setStyle({
+                                weight: 9,
+                                opacity: 1
+                            });
+                            showJourneyVideo(routeColors[i].day);
+                        });
+
+                        routeLayer.on("mouseout", () => {
+                            routeLayer.setStyle({
+                                weight: 5,
+                                opacity: 0.92
+                            });
+                            scheduleVideoHide();
+                        });
+                    }
 
 
                 } catch (error) {
@@ -857,17 +1045,17 @@
                      * on garde une ligne directe.
                      */
 
-                    L.polyline(
+                    const fallbackRoute = L.polyline(
                         [start, end],
                         {
 
-                            color: "#25231f",
+                            color,
 
-                            weight: 3,
+                            weight: 5,
 
-                            opacity: 0.45,
+                            opacity: 0.8,
 
-                            dashArray: "7 10",
+                            dashArray: "10 7",
 
                             lineCap: "round",
 
@@ -875,6 +1063,24 @@
 
                         }
                     ).addTo(map);
+
+                    if (routeColors[i] && routeColors[i].day) {
+                        fallbackRoute.on("mouseover", () => {
+                            fallbackRoute.setStyle({
+                                weight: 9,
+                                opacity: 1
+                            });
+                            showJourneyVideo(routeColors[i].day);
+                        });
+
+                        fallbackRoute.on("mouseout", () => {
+                            fallbackRoute.setStyle({
+                                weight: 5,
+                                opacity: 0.8
+                            });
+                            scheduleVideoHide();
+                        });
+                    }
 
                 }
 
@@ -895,70 +1101,6 @@
         async function displayJourney(etapes) {
 
     const latestIndex = etapes.length - 1;
-
-    /*
-     * Palette des journées
-     */
-    const dayColors = [
-        "#e35d3f", // orange
-        "#4f7cac", // bleu
-        "#6b8e5a", // vert
-        "#8b6fa8", // violet
-        "#c28b45", // jaune/brun
-        "#5f8f8f", // turquoise
-        "#b76565", // rouge doux
-        "#77716a"  // gris
-    ];
-
-
-    /*
-     * Regrouper les points par journée
-     */
-    const days = {};
-
-    etapes.forEach((etape) => {
-
-        const day = Number(etape.jour);
-
-        if (!days[day]) {
-            days[day] = [];
-        }
-
-        days[day].push([
-            Number(etape.latitude),
-            Number(etape.longitude)
-        ]);
-
-    });
-
-
-    /*
-     * Dessiner les trajets journée par journée
-     */
-    const routePromises = [];
-
-
-    Object.keys(days).forEach((day) => {
-
-        const coordinates = days[day];
-
-        if (coordinates.length < 2) {
-            return;
-        }
-
-        const color =
-            dayColors[(Number(day) - 1) % dayColors.length];
-
-
-        routePromises.push(
-            drawDayRoute(
-                coordinates,
-                color
-            )
-        );
-
-    });
-
 
     /*
      * Marqueurs
@@ -1019,10 +1161,34 @@
     });
 
 
-    /*
-     * Attendre que les routes soient calculées
-     */
-    await Promise.all(routePromises);
+    const coordinates = etapes.map(etape => [
+        Number(etape.latitude),
+        Number(etape.longitude)
+    ]);
+
+    const dayColors = [
+        "#e35d3f",
+        "#3f7cac",
+        "#5f8f5f",
+        "#8b6fa8",
+        "#c28b45",
+        "#2f8f9d",
+        "#b76565",
+        "#77716a"
+    ];
+
+    const routeColors = etapes.slice(0, -1).map(etape => {
+
+        const day = Number(etape.jour);
+
+        return {
+            day,
+            color: dayColors[(day - 1) % dayColors.length]
+        };
+
+    });
+
+    await drawRoute(coordinates, routeColors);
 
 
     /*
@@ -1034,16 +1200,6 @@
 
     currentDay.textContent =
         etapes[latestIndex].jour;
-
-
-    /*
-     * Cadrage
-     */
-    const coordinates =
-        etapes.map(etape => [
-            Number(etape.latitude),
-            Number(etape.longitude)
-        ]);
 
 
     if (coordinates.length > 1) {
@@ -1063,67 +1219,6 @@
     }
 
 }
-
-            /* =========================
-               TRAJET ROUTIER
-            ========================= */
-
-            await drawRoute(
-                coordinates
-            );
-
-
-            /* =========================
-               COMPTEUR
-            ========================= */
-
-            const currentDay =
-                document.getElementById(
-                    "currentDay"
-                );
-
-
-            currentDay.textContent =
-                etapes[latestIndex].jour;
-
-
-            /* =========================
-               CADRAGE
-            ========================= */
-
-            if (
-                coordinates.length > 1
-            ) {
-
-                const bounds =
-                    L.latLngBounds(
-                        coordinates
-                    );
-
-
-                map.fitBounds(
-                    bounds,
-                    {
-
-                        paddingTopLeft:
-                            [50, 130],
-
-                        paddingBottomRight:
-                            [50, 80]
-
-                    }
-                );
-
-            } else {
-
-                map.setView(
-                    coordinates[0],
-                    10
-                );
-
-            }
-
-        }
 
 
         /* ==================================================
