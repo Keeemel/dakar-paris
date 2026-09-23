@@ -822,20 +822,98 @@
             }).replace(".", "");
         }
 
-        async function loadWeather(coordinate, place) {
+        function formatWeatherDate(dateValue) {
+            if (!dateValue) {
+                return "aujourd'hui";
+            }
+
+            const date = new Date(dateValue);
+
+            if (Number.isNaN(date.getTime())) {
+                return "aujourd'hui";
+            }
+
+            return date.toLocaleDateString("fr-FR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long"
+            });
+        }
+
+        function getEstimatedWeatherDate(stepData) {
+            if (stepData?.date) {
+                return new Date(stepData.date);
+            }
+
+            const stepDay = Number(stepData?.jour) || 1;
+            const latestDay = Number(document.getElementById("currentDay")?.textContent) || stepDay;
+            const estimatedDate = new Date();
+            estimatedDate.setHours(12, 0, 0, 0);
+            estimatedDate.setDate(estimatedDate.getDate() - Math.max(0, latestDay - stepDay));
+            return estimatedDate;
+        }
+
+        function buildWeatherParams(coordinate, dateValue) {
+            const params = {
+                latitude: coordinate[0].toFixed(4),
+                longitude: coordinate[1].toFixed(4),
+                hourly: "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation_probability",
+                daily: "weather_code,temperature_2m_max,temperature_2m_min",
+                timezone: "auto",
+                forecast_days: "5"
+            };
+
+            if (dateValue) {
+                const targetDate = new Date(dateValue);
+
+                if (!Number.isNaN(targetDate.getTime())) {
+                    const startDate = new Date(targetDate);
+                    startDate.setHours(0, 0, 0, 0);
+
+                    const endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 1);
+
+                    params.start_date = startDate.toISOString().slice(0, 10);
+                    params.end_date = endDate.toISOString().slice(0, 10);
+                    delete params.forecast_days;
+                }
+            }
+
+            return new URLSearchParams(params);
+        }
+
+        function findNearestWeatherHour(hourlyTimes, dateValue) {
+            if (!Array.isArray(hourlyTimes) || !hourlyTimes.length) {
+                return 0;
+            }
+
+            const targetDate = new Date(dateValue || Date.now());
+            targetDate.setMinutes(0, 0, 0);
+
+            let nearestIndex = 0;
+            let nearestDelta = Number.MAX_SAFE_INTEGER;
+
+            hourlyTimes.forEach((time, index) => {
+                const candidateTime = new Date(time);
+                const delta = Math.abs(candidateTime.getTime() - targetDate.getTime());
+
+                if (delta < nearestDelta) {
+                    nearestDelta = delta;
+                    nearestIndex = index;
+                }
+            });
+
+            return nearestIndex;
+        }
+
+        async function loadWeather(coordinate, place, stepData = null) {
 
             weatherCard.setAttribute("aria-hidden", "false");
             weatherLoading.hidden = false;
             weatherContent.innerHTML = "";
 
-            const params = new URLSearchParams({
-                latitude: coordinate[0].toFixed(4),
-                longitude: coordinate[1].toFixed(4),
-                current: "temperature_2m,apparent_temperature,weather_code,wind_speed_10m",
-                daily: "weather_code,temperature_2m_max,temperature_2m_min",
-                forecast_days: "4",
-                timezone: "auto"
-            });
+            const weatherDate = getEstimatedWeatherDate(stepData);
+            const params = buildWeatherParams(coordinate, weatherDate);
 
             try {
                 const response = await fetch(
@@ -847,41 +925,58 @@
                 }
 
                 const weather = await response.json();
-                const currentDescription = getWeatherDescription(
-                    weather.current.weather_code
-                );
+                const forecastHours = weather.hourly?.time || [];
+                const nearestHourIndex = findNearestWeatherHour(forecastHours, weatherDate || new Date().toISOString());
+                const currentWeatherCode = weather.hourly?.weather_code?.[nearestHourIndex] ?? 0;
+                const currentDescription = getWeatherDescription(currentWeatherCode);
+                const currentTemperature = weather.hourly?.temperature_2m?.[nearestHourIndex] ?? 0;
+                const currentApparent = weather.hourly?.apparent_temperature?.[nearestHourIndex] ?? currentTemperature;
+                const currentWind = weather.hourly?.wind_speed_10m?.[nearestHourIndex] ?? 0;
+                const currentRain = weather.hourly?.precipitation_probability?.[nearestHourIndex] ?? 0;
+                const weatherLabel = stepData?.jour
+                    ? `Météo du jour ${stepData.jour}`
+                    : "Météo de l’étape";
+            
+                const weatherDateLabel = (stepData?.date || weatherDate)
+                    ? formatWeatherDate(stepData?.date || weatherDate)
+                    : "date estimée";
 
                 weatherLoading.hidden = true;
                 weatherContent.innerHTML = `
                     <div class="weather-heading">
                         <div>
-                            <div class="weather-kicker">Météo à la dernière étape</div>
+                            <div class="weather-kicker">${weatherLabel} · ${weatherDateLabel}</div>
                             <div class="weather-place">${escapeHTML(place || "Position actuelle")}</div>
-                            <div class="weather-updated">${weather.current.time.replace("T", " à ")}</div>
+                            <div class="weather-updated">${forecastHours[nearestHourIndex]?.replace("T", " à ") || "Horaire indisponible"}</div>
                         </div>
                         <div class="weather-icon" aria-hidden="true">${currentDescription[1]}</div>
                     </div>
                     <div class="weather-current">
-                        <div class="weather-temperature">${Math.round(weather.current.temperature_2m)}°</div>
+                        <div class="weather-temperature">${Math.round(currentTemperature)}°</div>
                         <div>
                             <div class="weather-description">${currentDescription[0]}</div>
                             <div class="weather-details">
-                                <span>Ressenti ${Math.round(weather.current.apparent_temperature)}°</span>
-                                <span>Vent ${Math.round(weather.current.wind_speed_10m)} km/h</span>
+                                <span>Ressenti ${Math.round(currentApparent)}°</span>
+                                <span>Vent ${Math.round(currentWind)} km/h</span>
                             </div>
                         </div>
                     </div>
+                    <div class="weather-details" style="margin-bottom: 12px;">
+                        <span>Précipitations ${Math.round(currentRain)}%</span>
+                    </div>
                     <div class="weather-forecast">
-                        ${weather.daily.time.map((date, index) => {
-                    const description = getWeatherDescription(weather.daily.weather_code[index]);
-                    return `
+                        ${(weather.hourly?.time || []).slice(0, 4).map((time, index) => {
+                            const hourlyCode = weather.hourly.weather_code[index];
+                            const hourlyDescription = getWeatherDescription(hourlyCode);
+                            const hourlyTemp = weather.hourly.temperature_2m[index];
+                            return `
                                 <div class="forecast-day">
-                                    ${formatForecastDay(date, index)}
-                                    <span class="forecast-icon" aria-hidden="true">${description[1]}</span>
-                                    <span class="forecast-temperatures">${Math.round(weather.daily.temperature_2m_max[index])}° / ${Math.round(weather.daily.temperature_2m_min[index])}°</span>
+                                    ${new Date(time).toLocaleTimeString("fr-FR", { hour: "2-digit" }).replace(":00", "h")}
+                                    <span class="forecast-icon" aria-hidden="true">${hourlyDescription[1]}</span>
+                                    <span class="forecast-temperatures">${Math.round(hourlyTemp)}°</span>
                                 </div>
                             `;
-                }).join("")}
+                        }).join("")}
                     </div>
                 `;
 
@@ -1525,6 +1620,13 @@
                             closeButton: true
                         }
                     )
+                    .on("click", () => {
+                        loadWeather(
+                            [lat, lng],
+                            etape.titre,
+                            etape
+                        );
+                    })
                     .addTo(map);
 
 
@@ -1602,7 +1704,8 @@
 
             loadWeather(
                 latestCoordinate,
-                etapes[latestIndex].titre
+                etapes[latestIndex].titre,
+                etapes[latestIndex]
             );
 
 
