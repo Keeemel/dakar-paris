@@ -1,0 +1,762 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Le parcours — Dakar → Paris</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Nunito", sans-serif;
+            background: #f4f0e8;
+        }
+
+        /* =========================
+           CARTE
+        ========================= */
+
+        #map {
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .header {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+
+            z-index: 1000;
+
+            padding: 18px 22px;
+
+            background: rgba(255, 252, 246, 0.94);
+            backdrop-filter: blur(14px);
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, 0.10);
+
+            max-width: 340px;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #77716a;
+
+            margin-bottom: 4px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            line-height: 1;
+            font-weight: 900;
+            color: #25231f;
+
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            line-height: 1.45;
+            color: #625e57;
+        }
+
+        /* =========================
+           COMPTEUR
+        ========================= */
+
+        .progress {
+            position: fixed;
+            right: 24px;
+            top: 24px;
+
+            z-index: 1000;
+
+            background: rgba(255, 252, 246, 0.94);
+            backdrop-filter: blur(14px);
+
+            border-radius: 18px;
+
+            padding: 14px 18px;
+
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, 0.10);
+
+            text-align: center;
+        }
+
+        .progress-number {
+            display: block;
+
+            font-size: 28px;
+            line-height: 1;
+
+            font-weight: 900;
+            color: #25231f;
+        }
+
+        .progress-label {
+            display: block;
+
+            margin-top: 3px;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            text-transform: uppercase;
+            letter-spacing: 1px;
+
+            color: #77716a;
+        }
+
+        /* =========================
+           MARQUEURS
+        ========================= */
+
+        .step-marker {
+            width: 14px;
+            height: 14px;
+
+            border-radius: 50%;
+
+            background: #25231f;
+
+            border: 3px solid #fff;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .current-marker {
+            position: relative;
+
+            width: 20px;
+            height: 20px;
+
+            border-radius: 50%;
+
+            background: #e35d3f;
+
+            border: 4px solid white;
+
+            box-shadow:
+                0 3px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .current-marker::before {
+            content: "";
+
+            position: absolute;
+
+            top: 50%;
+            left: 50%;
+
+            width: 34px;
+            height: 34px;
+
+            transform: translate(-50%, -50%);
+
+            border-radius: 50%;
+
+            border: 2px solid rgba(227, 93, 63, 0.55);
+
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0% {
+                transform: translate(-50%, -50%) scale(0.7);
+                opacity: 1;
+            }
+
+            70% {
+                transform: translate(-50%, -50%) scale(1.4);
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* =========================
+           POPUP
+        ========================= */
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 18px;
+
+            padding: 0;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 12px 35px rgba(0, 0, 0, 0.16);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            width: 260px !important;
+        }
+
+        .popup {
+            padding: 18px;
+        }
+
+        .popup-day {
+            display: inline-block;
+
+            font-size: 11px;
+            font-weight: 800;
+
+            text-transform: uppercase;
+            letter-spacing: 1px;
+
+            color: #e35d3f;
+
+            margin-bottom: 5px;
+        }
+
+        .popup-title {
+            font-size: 20px;
+            font-weight: 900;
+
+            color: #25231f;
+
+            margin-bottom: 7px;
+        }
+
+        .popup-description {
+            font-size: 13px;
+            line-height: 1.5;
+
+            color: #625e57;
+        }
+
+        .popup-date {
+            margin-top: 12px;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            color: #999188;
+        }
+
+        /* =========================
+           LOADING
+        ========================= */
+
+        .loading {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 2000;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #f4f0e8;
+
+            font-size: 16px;
+            font-weight: 800;
+
+            color: #25231f;
+
+            transition: opacity 0.4s ease;
+        }
+
+        .loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            .header {
+                top: 14px;
+                left: 14px;
+                right: 14px;
+
+                max-width: none;
+
+                padding: 15px 17px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 13px;
+            }
+
+            .progress {
+                top: auto;
+                right: 14px;
+                bottom: 20px;
+
+                padding: 11px 15px;
+            }
+
+            .progress-number {
+                font-size: 23px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        Le parcours se charge...
+    </div>
+
+
+    <!-- Header -->
+    <div class="header">
+
+        <div class="eyebrow">
+            Dakar → Paris
+        </div>
+
+        <h1>
+            Le parcours
+        </h1>
+
+        <p>
+            31 jours à pied et en stop.
+            Suivez chaque étape du voyage de Nico,
+            Ilhan et Flamby.
+        </p>
+
+    </div>
+
+
+    <!-- Compteur -->
+    <div class="progress">
+
+        <span class="progress-number" id="currentDay">
+            —
+        </span>
+
+        <span class="progress-label">
+            jour sur 31
+        </span>
+
+    </div>
+
+
+    <!-- Carte -->
+    <div id="map"></div>
+
+
+    <!-- Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+
+    <script>
+
+        /* ==================================================
+           CONFIGURATION SUPABASE
+        ================================================== */
+
+        const SUPABASE_URL =
+            "https://TON-PROJET.supabase.co";
+
+        const SUPABASE_KEY =
+            "TON-SB-PUBLISHABLE-KEY";
+
+
+        /* ==================================================
+           CARTE
+        ================================================== */
+
+        const map = L.map("map", {
+
+            zoomControl: false,
+
+            // Vue initiale entre Dakar et Paris
+            center: [22, -5],
+
+            zoom: 4
+
+        });
+
+
+        /* Fond de carte CartoDB
+           Plus doux et minimaliste qu'OpenStreetMap classique.
+        */
+
+        L.tileLayer(
+            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+            {
+                attribution:
+                    '&copy; OpenStreetMap &copy; CARTO',
+
+                maxZoom: 19
+            }
+        ).addTo(map);
+
+
+        /* Zoom en bas à droite */
+
+        L.control.zoom({
+            position: "bottomright"
+        }).addTo(map);
+
+
+        /* ==================================================
+           ICÔNES
+        ================================================== */
+
+        function createNormalIcon() {
+
+            return L.divIcon({
+
+                className: "",
+
+                html:
+                    `<div class="step-marker"></div>`,
+
+                iconSize: [14, 14],
+
+                iconAnchor: [7, 7],
+
+                popupAnchor: [0, -10]
+
+            });
+
+        }
+
+
+        function createCurrentIcon() {
+
+            return L.divIcon({
+
+                className: "",
+
+                html:
+                    `<div class="current-marker"></div>`,
+
+                iconSize: [20, 20],
+
+                iconAnchor: [10, 10],
+
+                popupAnchor: [0, -15]
+
+            });
+
+        }
+
+
+        /* ==================================================
+           POPUP
+        ================================================== */
+
+        function createPopup(etape) {
+
+            const date = etape.date
+                ? new Date(etape.date).toLocaleDateString(
+                    "fr-FR",
+                    {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric"
+                    }
+                )
+                : "";
+
+            return `
+
+                <div class="popup">
+
+                    <div class="popup-day">
+                        Jour ${etape.jour}
+                    </div>
+
+                    <div class="popup-title">
+                        ${escapeHTML(etape.titre)}
+                    </div>
+
+                    <div class="popup-description">
+                        ${escapeHTML(etape.description)}
+                    </div>
+
+                    ${date
+                    ? `
+                            <div class="popup-date">
+                                ${date}
+                            </div>
+                        `
+                    : ""
+                }
+
+                </div>
+
+            `;
+        }
+
+
+        /* Petite protection pour les textes venant
+           directement de Supabase.
+        */
+
+        function escapeHTML(text) {
+
+            if (!text) return "";
+
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        /* ==================================================
+           RECUPERATION DES DONNEES
+        ================================================== */
+
+        async function loadJourney() {
+
+            const loading =
+                document.getElementById("loading");
+
+            try {
+
+                const url =
+                    `${SUPABASE_URL}/rest/v1/etapes` +
+                    `?select=jour,latitude,longitude,titre,description,date` +
+                    `&order=jour.asc`;
+
+
+                const response = await fetch(url, {
+
+                    headers: {
+
+                        "apikey": SUPABASE_KEY,
+
+                        "Authorization":
+                            `Bearer ${SUPABASE_KEY}`
+
+                    }
+
+                });
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Erreur API : ${response.status}`
+                    );
+
+                }
+
+
+                const etapes = await response.json();
+
+
+                if (!etapes.length) {
+
+                    throw new Error(
+                        "Aucune étape trouvée."
+                    );
+
+                }
+
+
+                displayJourney(etapes);
+
+
+                loading.classList.add("hidden");
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                loading.innerHTML = `
+                    Impossible de charger le parcours.
+                `;
+
+            }
+
+        }
+
+
+        /* ==================================================
+           AFFICHAGE DU PARCOURS
+        ================================================== */
+
+        function displayJourney(etapes) {
+
+            const coordinates = [];
+
+            const latestIndex =
+                etapes.length - 1;
+
+
+            etapes.forEach((etape, index) => {
+
+                const lat =
+                    Number(etape.latitude);
+
+                const lng =
+                    Number(etape.longitude);
+
+
+                coordinates.push([lat, lng]);
+
+
+                const isCurrent =
+                    index === latestIndex;
+
+
+                const marker =
+                    L.marker(
+                        [lat, lng],
+                        {
+                            icon: isCurrent
+                                ? createCurrentIcon()
+                                : createNormalIcon(),
+
+                            zIndexOffset:
+                                isCurrent ? 1000 : 0
+                        }
+                    );
+
+
+                marker
+                    .bindPopup(
+                        createPopup(etape),
+                        {
+                            closeButton: true
+                        }
+                    )
+                    .addTo(map);
+
+            });
+
+
+            /* ==================================================
+               TRACE EN POINTILLÉS
+            ================================================== */
+
+            L.polyline(
+                coordinates,
+                {
+
+                    color: "#25231f",
+
+                    weight: 3,
+
+                    opacity: 0.75,
+
+                    dashArray: "7 10",
+
+                    lineCap: "round",
+
+                    lineJoin: "round"
+
+                }
+            ).addTo(map);
+
+
+            /* ==================================================
+               COMPTEUR
+            ================================================== */
+
+            const currentDay =
+                document.getElementById("currentDay");
+
+            currentDay.textContent =
+                etapes[latestIndex].jour;
+
+
+            /* ==================================================
+               CADRAGE AUTOMATIQUE
+            ================================================== */
+
+            if (coordinates.length > 1) {
+
+                const bounds =
+                    L.latLngBounds(coordinates);
+
+                map.fitBounds(bounds, {
+
+                    paddingTopLeft: [50, 130],
+
+                    paddingBottomRight: [50, 80]
+
+                });
+
+            } else {
+
+                map.setView(
+                    coordinates[0],
+                    10
+                );
+
+            }
+
+        }
+
+
+        /* ==================================================
+           LANCEMENT
+        ================================================== */
+
+        loadJourney();
+
+    </script>
+
+</body>
+
+</html>
+```
