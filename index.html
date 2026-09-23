@@ -432,6 +432,34 @@
             animation: pulse 2s infinite;
         }
 
+        .next-step-marker {
+            position: relative;
+
+            width: 16px;
+            height: 16px;
+
+            border-radius: 50%;
+
+            background: #f5f2ed;
+
+            border: 2px solid rgba(98, 94, 87, 0.75);
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .next-step-marker::before {
+            content: "";
+
+            position: absolute;
+
+            inset: 4px;
+
+            border-radius: 50%;
+
+            background: rgba(98, 94, 87, 0.55);
+        }
+
         @keyframes pulse {
 
             0% {
@@ -1139,6 +1167,25 @@
 
         }
 
+        function createNextStepIcon() {
+
+            return L.divIcon({
+
+                className: "",
+
+                html:
+                    `<div class="next-step-marker"></div>`,
+
+                iconSize: [16, 16],
+
+                iconAnchor: [8, 8],
+
+                popupAnchor: [0, -10]
+
+            });
+
+        }
+
 
         /* ==================================================
            POPUP
@@ -1785,6 +1832,39 @@
                 etapes[latestIndex].jour;
 
             latestCoordinate = coordinates[latestIndex];
+
+            const FIXED_NEXT_STEP_ID = 1000;
+            const nextStep = etapes.find(step => Number(step.id) === FIXED_NEXT_STEP_ID) || null;
+
+            if (nextStep && coordinates.length > 1) {
+                const currentPoint = latestCoordinate;
+                const nextPoint = [Number(nextStep.latitude), Number(nextStep.longitude)];
+
+                L.polyline(
+                    [currentPoint, nextPoint],
+                    {
+                        color: "#8e8a84",
+                        weight: 2,
+                        opacity: 0.75,
+                        dashArray: "6 8",
+                        lineCap: "round",
+                        lineJoin: "round"
+                    }
+                ).addTo(map);
+
+                const nextStepMarker = L.marker(nextPoint, {
+                    icon: createNextStepIcon(),
+                    zIndexOffset: 200
+                }).addTo(map);
+
+                nextStepMarker.bindPopup(`
+                    <div class="popup">
+                        <div class="popup-day">Prochaine étape</div>
+                        <div class="popup-title">${escapeHTML(nextStep.titre || "À venir")}</div>
+                        <div class="popup-description">${escapeHTML(nextStep.description || "Suite du parcours.")}</div>
+                    </div>
+                `);
+            }
 
             loadWeather(
                 latestCoordinate,
