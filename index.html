@@ -707,6 +707,68 @@
             background: #25231f;
         }
 
+        .floating-rails {
+            position: fixed;
+            inset: 24px;
+            z-index: 1000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-rail {
+            display: flex;
+            min-width: 0;
+            max-height: 100%;
+            flex-direction: column;
+            gap: 16px;
+            pointer-events: auto;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .floating-rail > * {
+            position: static;
+            flex: 0 0 auto;
+        }
+
+        .rail-left {
+            width: min(380px, 40vw);
+        }
+
+        .rail-right {
+            width: 275px;
+            align-items: stretch;
+        }
+
+        .floating-rail .header {
+            width: 100%;
+        }
+
+        .floating-rail .progress,
+        .floating-rail .weather-card,
+        .floating-rail .live-card,
+        .floating-rail .map-legend,
+        .floating-rail .journey-video {
+            width: 100%;
+            margin: 0;
+        }
+
+        .floating-rail .live-card {
+            width: 100%;
+        }
+
+        .floating-rail .journey-video[aria-hidden="true"] {
+            display: none;
+        }
+
+        .floating-rail .journey-video.visible {
+            display: block;
+        }
+
         /* Direction artistique Dakar Paris : vert affiche, creme papier, accents pop. */
         :root {
             --dp-green: #195534;
@@ -883,19 +945,118 @@
             color: var(--dp-cream);
         }
 
+        .rail {
+            position: fixed;
+            z-index: 1000;
+            display: flex;
+            max-height: calc(100vh - 48px);
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .rail-top-right {
+            top: 24px;
+            right: 24px;
+            align-items: flex-end;
+            max-height: calc(56vh - 24px);
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .rail-top-right::-webkit-scrollbar {
+            display: none;
+        }
+
+        .rail-bottom-right {
+            right: 24px;
+            bottom: 24px;
+            max-height: calc(44vh - 24px);
+            flex-direction: column-reverse;
+            align-items: flex-end;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .rail-bottom-right::-webkit-scrollbar {
+            display: none;
+        }
+
+        .rail > * {
+            position: static;
+            flex: 0 0 auto;
+        }
+
+        .rail .map-tools {
+            position: static;
+        }
+
+        .rail .weather-card,
+        .rail .live-card,
+        .rail .journey-video {
+            width: 275px;
+        }
+
+        .rail .journey-video[aria-hidden="true"] {
+            display: none;
+        }
+
+        .rail .journey-video.visible {
+            display: block;
+        }
+
         /* =========================
            MOBILE
         ========================= */
 
         @media (max-width: 600px) {
 
-            .header {
+            .rail-top-right {
                 top: 14px;
-                left: 14px;
                 right: 14px;
+                bottom: auto;
+                left: 14px;
+                align-items: stretch;
+                max-height: calc(56vh - 14px);
+            }
 
+            .rail-top-right .progress,
+            .rail-top-right .map-tools {
+                align-self: flex-end;
+            }
+
+            .rail-bottom-right {
+                right: 14px;
+                top: calc(56vh + 14px);
+                bottom: auto;
+                left: 14px;
+                max-height: calc(44vh - 28px);
+                align-items: stretch;
+            }
+
+            .rail-bottom-right .live-card,
+            .rail-bottom-right .journey-video,
+            .rail .weather-card {
+                width: 100%;
+            }
+
+            .floating-rails {
+                inset: 14px;
+                flex-direction: column;
+                justify-content: flex-start;
+                gap: 14px;
+                overflow-y: auto;
+            }
+
+            .floating-rail,
+            .rail-left,
+            .rail-right {
+                width: 100%;
+                max-height: none;
+                overflow: visible;
+            }
+
+            .header {
                 max-width: none;
-
                 padding: 15px 17px;
             }
 
@@ -920,9 +1081,6 @@
             }
 
             .map-tools {
-                top: auto;
-                right: 14px;
-                bottom: 100px;
                 flex-wrap: wrap;
                 justify-content: flex-end;
             }
@@ -938,17 +1096,11 @@
             }
 
             .weather-card {
-                top: 190px;
-                right: 14px;
                 width: calc(100vw - 28px);
             }
 
             .live-card {
-                top: auto;
-                right: 14px;
-                bottom: 14px;
-                left: 14px;
-                width: auto;
+                width: 100%;
             }
 
             .live-preview-wrap iframe,
@@ -958,9 +1110,7 @@
             }
 
             .journey-video {
-                right: 14px;
-                bottom: 14px;
-                width: calc(100vw - 28px);
+                width: 100%;
             }
         }
     </style>
@@ -997,58 +1147,55 @@
 
     </div>
 
-    <!-- Compteur -->
-    <div class="progress">
+    <div class="rail rail-top-right">
 
-        <span class="progress-number" id="currentDay">
-            —
-        </span>
-
-        <span class="progress-label">
-            jours parcourus
-        </span>
-
-    </div>
-
-    <div class="map-tools" aria-label="Outils de carte">
-        <button class="map-tool" id="fitJourney" type="button">Voir le voyage</button>
-        <button class="map-tool" id="locateLatest" type="button">Dernière étape</button>
-    </div>
-
-    <aside class="weather-card" id="weatherCard" aria-hidden="true" aria-live="polite">
-        <div class="weather-loading" id="weatherLoading">Chargement de la météo...</div>
-        <div id="weatherContent"></div>
-    </aside>
-
-    <aside class="live-card" aria-label="Live Twitch Nico La">
-        <div id="twitch-live-player" class="live-preview-wrap" style="min-height: 150px; background: #0e0e10;">
-            <div class="live-fallback" id="twitch-live-fallback">
-                <a href="https://twitch.tv/nico_la" target="_blank" rel="noopener">Ouvrir le live Twitch</a>
-            </div>
+        <div class="progress">
+            <span class="progress-number" id="currentDay">—</span>
+            <span class="progress-label">jours parcourus</span>
         </div>
-    </aside>
+
+        <div class="map-tools" aria-label="Outils de carte">
+            <button class="map-tool" id="fitJourney" type="button">Voir le voyage</button>
+            <button class="map-tool" id="locateLatest" type="button">Dernière étape</button>
+        </div>
+
+        <aside class="weather-card" id="weatherCard" aria-hidden="true" aria-live="polite">
+            <div class="weather-loading" id="weatherLoading">Chargement de la météo...</div>
+            <div id="weatherContent"></div>
+        </aside>
+
+    </div>
+
+    <div class="rail rail-bottom-right">
+
+        <aside class="live-card" aria-label="Live Twitch Nico La">
+            <div id="twitch-live-player" class="live-preview-wrap" style="background: #0e0e10;">
+                <div class="live-fallback" id="twitch-live-fallback">
+                    <a href="https://twitch.tv/nico_la" target="_blank" rel="noopener">Ouvrir le live Twitch</a>
+                </div>
+            </div>
+        </aside>
+
+        <aside class="journey-video" id="journeyVideo" aria-hidden="true">
+            <div class="journey-video-header">
+                <span class="journey-video-title" id="journeyVideoTitle"></span>
+                <button class="journey-video-close" id="journeyVideoClose" type="button" title="Fermer la vidéo"
+                    aria-label="Fermer la vidéo">
+                    ×
+                </button>
+            </div>
+
+            <iframe class="journey-video-frame" id="journeyVideoFrame" title="Résumé vidéo du jour"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen>
+            </iframe>
+        </aside>
+
+    </div>
 
     <aside class="map-legend" aria-label="Légende des jours">
         <div class="legend-title">Couleurs des jours</div>
         <div class="legend-items" id="legendItems"></div>
-    </aside>
-
-    <!-- Résumé vidéo affiché au survol d'un trajet -->
-    <aside class="journey-video" id="journeyVideo" aria-hidden="true">
-
-        <div class="journey-video-header">
-            <span class="journey-video-title" id="journeyVideoTitle"></span>
-            <button class="journey-video-close" id="journeyVideoClose" type="button" title="Fermer la vidéo"
-                aria-label="Fermer la vidéo">
-                ×
-            </button>
-        </div>
-
-        <iframe class="journey-video-frame" id="journeyVideoFrame" title="Résumé vidéo du jour"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen>
-        </iframe>
-
     </aside>
 
     <!-- Carte -->
