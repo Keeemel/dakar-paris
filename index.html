@@ -846,6 +846,9 @@
             border-radius: 6px;
             background: var(--dp-green-dark);
             box-shadow: 5px 5px 0 var(--dp-red);
+            left: 24px;
+            right: auto;
+            width: min(380px, calc(100vw - 48px));
         }
 
         .live-preview-wrap,
@@ -853,6 +856,7 @@
         #twitch-live,
         #twitch-live iframe {
             border-radius: 3px !important;
+            height: 214px;
         }
 
         .live-fallback {
@@ -937,6 +941,20 @@
                 top: 190px;
                 right: 14px;
                 width: calc(100vw - 28px);
+            }
+
+            .live-card {
+                top: auto;
+                right: 14px;
+                bottom: 14px;
+                left: 14px;
+                width: auto;
+            }
+
+            .live-preview-wrap iframe,
+            #twitch-live,
+            #twitch-live iframe {
+                height: 180px;
             }
 
             .journey-video {
