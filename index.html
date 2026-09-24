@@ -251,7 +251,7 @@
             box-shadow: none;
             backdrop-filter: none;
             overflow: hidden;
-            pointer-events: none;
+            pointer-events: auto;
         }
 
         .live-header {
@@ -265,7 +265,7 @@
             border-radius: 14px;
             background: #0e0e10;
             box-shadow: none;
-            pointer-events: none;
+            pointer-events: auto;
         }
 
         .live-preview-wrap iframe,
@@ -277,7 +277,7 @@
             border: 0 !important;
             border-radius: 14px !important;
             overflow: hidden;
-            pointer-events: none;
+            pointer-events: auto;
         }
 
         .live-button {
@@ -813,8 +813,8 @@
     <aside class="live-card" aria-label="Live Twitch Nico La">
         <div id="twitch-live-player" class="live-preview-wrap" style="min-height: 150px; background: #0e0e10;">
             <iframe id="twitch-live" title="Live Twitch Nico La"
-                src="https://player.twitch.tv/?channel=nico_la&parent=localhost&autoplay=true&muted=true&controls=false"
-                allow="autoplay; fullscreen" allowfullscreen></iframe>
+                src="https://player.twitch.tv/?channel=nico_la&muted=true&autoplay=true&parent=localhost"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
         </div>
     </aside>
 
