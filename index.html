@@ -730,7 +730,7 @@
             scrollbar-width: thin;
         }
 
-        .floating-rail > * {
+        .floating-rail>* {
             position: static;
             flex: 0 0 auto;
         }
@@ -967,6 +967,19 @@
             display: none;
         }
 
+        .rail-left {
+            top: 24px;
+            left: 24px;
+            width: min(380px, 40vw);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .rail-left::-webkit-scrollbar {
+            display: none;
+        }
+
         .rail-bottom-right {
             right: 24px;
             bottom: 24px;
@@ -981,7 +994,7 @@
             display: none;
         }
 
-        .rail > * {
+        .rail>* {
             position: static;
             flex: 0 0 auto;
         }
@@ -994,6 +1007,16 @@
         .rail .live-card,
         .rail .journey-video {
             width: 275px;
+        }
+
+        .rail-left .header,
+        .rail-left .live-card {
+            width: 100%;
+        }
+
+        .rail-left .map-legend {
+            position: static;
+            width: 190px;
         }
 
         .rail .journey-video[aria-hidden="true"] {
@@ -1010,13 +1033,22 @@
 
         @media (max-width: 600px) {
 
-            .rail-top-right {
+            .rail-left {
                 top: 14px;
+                right: 14px;
+                left: 14px;
+                width: auto;
+                max-height: calc(40vh - 14px);
+                overflow-y: auto;
+            }
+
+            .rail-top-right {
+                top: calc(40vh + 28px);
                 right: 14px;
                 bottom: auto;
                 left: 14px;
                 align-items: stretch;
-                max-height: calc(56vh - 14px);
+                max-height: calc(60vh - 42px);
             }
 
             .rail-top-right .progress,
@@ -1024,17 +1056,6 @@
                 align-self: flex-end;
             }
 
-            .rail-bottom-right {
-                right: 14px;
-                top: calc(56vh + 14px);
-                bottom: auto;
-                left: 14px;
-                max-height: calc(44vh - 28px);
-                align-items: stretch;
-            }
-
-            .rail-bottom-right .live-card,
-            .rail-bottom-right .journey-video,
             .rail .weather-card {
                 width: 100%;
             }
@@ -1053,6 +1074,12 @@
                 width: 100%;
                 max-height: none;
                 overflow: visible;
+            }
+
+            .rail-left {
+                width: auto;
+                max-height: calc(40vh - 14px);
+                overflow-y: auto;
             }
 
             .header {
@@ -1123,8 +1150,10 @@
         Le parcours se charge...
     </div>
 
-    <!-- Header -->
-    <div class="header">
+    <div class="rail rail-left">
+
+        <!-- Header -->
+        <div class="header">
 
         <div class="eyebrow">
             Dakar → Paris
@@ -1145,6 +1174,21 @@
             <span id="routeStatus">Parcours en cours</span>
         </div>
 
+        </div>
+
+        <aside class="live-card" aria-label="Live Twitch Nico La">
+            <div id="twitch-live-player" class="live-preview-wrap" style="background: #0e0e10;">
+                <div class="live-fallback" id="twitch-live-fallback">
+                    <a href="https://twitch.tv/nico_la" target="_blank" rel="noopener">Ouvrir le live Twitch</a>
+                </div>
+            </div>
+        </aside>
+
+        <aside class="map-legend" aria-label="Légende des jours">
+            <div class="legend-title">Couleurs des jours</div>
+            <div class="legend-items" id="legendItems"></div>
+        </aside>
+
     </div>
 
     <div class="rail rail-top-right">
@@ -1164,18 +1208,6 @@
             <div id="weatherContent"></div>
         </aside>
 
-    </div>
-
-    <div class="rail rail-bottom-right">
-
-        <aside class="live-card" aria-label="Live Twitch Nico La">
-            <div id="twitch-live-player" class="live-preview-wrap" style="background: #0e0e10;">
-                <div class="live-fallback" id="twitch-live-fallback">
-                    <a href="https://twitch.tv/nico_la" target="_blank" rel="noopener">Ouvrir le live Twitch</a>
-                </div>
-            </div>
-        </aside>
-
         <aside class="journey-video" id="journeyVideo" aria-hidden="true">
             <div class="journey-video-header">
                 <span class="journey-video-title" id="journeyVideoTitle"></span>
@@ -1192,11 +1224,6 @@
         </aside>
 
     </div>
-
-    <aside class="map-legend" aria-label="Légende des jours">
-        <div class="legend-title">Couleurs des jours</div>
-        <div class="legend-items" id="legendItems"></div>
-    </aside>
 
     <!-- Carte -->
     <div id="map"></div>
