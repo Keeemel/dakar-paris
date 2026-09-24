@@ -280,6 +280,25 @@
             pointer-events: auto;
         }
 
+        .live-fallback {
+            display: grid;
+            min-height: 150px;
+            place-items: center;
+            padding: 18px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .live-fallback a {
+            color: #fff;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .live-fallback a:hover {
+            text-decoration: underline;
+        }
+
         .live-button {
             display: none;
         }
@@ -812,9 +831,9 @@
 
     <aside class="live-card" aria-label="Live Twitch Nico La">
         <div id="twitch-live-player" class="live-preview-wrap" style="min-height: 150px; background: #0e0e10;">
-            <iframe id="twitch-live" title="Live Twitch Nico La"
-                src="https://player.twitch.tv/?channel=nico_la&muted=true&autoplay=true&parent=localhost"
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
+            <div class="live-fallback" id="twitch-live-fallback">
+                <a href="https://twitch.tv/nico_la" target="_blank" rel="noopener">Ouvrir le live Twitch</a>
+            </div>
         </div>
     </aside>
 
@@ -849,6 +868,25 @@
     </script>
 
     <script>
+        function initTwitchLive() {
+            const container = document.getElementById("twitch-live-player");
+            const fallback = document.getElementById("twitch-live-fallback");
+            const host = window.location.hostname;
+
+            if (!container || !fallback || host === "localhost" || host === "127.0.0.1") {
+                return;
+            }
+
+            const iframe = document.createElement("iframe");
+            iframe.id = "twitch-live";
+            iframe.title = "Live Twitch Nico La";
+            iframe.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
+            iframe.allowFullscreen = true;
+            iframe.src = `https://player.twitch.tv/?channel=nico_la&muted=true&autoplay=true&parent=${encodeURIComponent(host)}`;
+            fallback.remove();
+            container.appendChild(iframe);
+        }
+
         /* ==================================================
            CARTE
         ================================================== */
@@ -2011,6 +2049,7 @@
         ================================================== */
 
         loadJourney();
+        initTwitchLive();
 
     </script>
 
