@@ -862,7 +862,7 @@
 
             const uniqueParents = [...new Set(parentHosts)];
 
-            new window.Twitch.Player("twitch-live", {
+            const player = new window.Twitch.Player("twitch-live", {
                 channel: "nico_la",
                 width: "100%",
                 height: "150",
@@ -870,6 +870,11 @@
                 autoplay: true,
                 muted: true,
                 controls: false
+            });
+
+            player.addEventListener(window.Twitch.Player.READY, () => {
+                player.setMuted(true);
+                player.play();
             });
         }
 
