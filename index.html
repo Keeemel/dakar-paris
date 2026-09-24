@@ -238,6 +238,64 @@
             display: none;
         }
 
+        .live-card {
+            position: fixed;
+            top: 470px;
+            right: 24px;
+            z-index: 1000;
+            width: 275px;
+            padding: 10px 10px 8px;
+            border: 1px solid rgba(37, 35, 31, 0.1);
+            border-radius: 16px;
+            background: rgba(255, 252, 246, 0.98);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .live-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #25231f;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1.3px;
+            text-transform: uppercase;
+        }
+
+        .live-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #25231f;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #d9363e;
+            box-shadow: 0 0 0 4px rgba(217, 54, 62, 0.18);
+            animation: livePulse 1.4s infinite;
+        }
+
+        @keyframes livePulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.25); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .live-frame {
+            display: block;
+            width: 100%;
+            height: 150px;
+            border: 0;
+            border-radius: 12px;
+            background: #0e0e10;
+        }
+
         .weather-heading {
             display: flex;
             align-items: flex-start;
@@ -764,6 +822,20 @@
         <div id="weatherContent"></div>
     </aside>
 
+    <aside class="live-card" aria-label="Live Twitch Nico La">
+        <div class="live-header">
+            <span class="live-status"><span class="live-dot"></span> Live</span>
+            <a href="https://www.twitch.tv/nico_la" target="_blank" rel="noreferrer" style="color:#625e57; text-decoration:none; font-weight:800;">nico_la</a>
+        </div>
+        <iframe
+            class="live-frame"
+            src="https://player.twitch.tv/?channel=nico_la&parent=localhost&muted=true"
+            title="Live Twitch Nico La"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+        </iframe>
+    </aside>
+
     <aside class="map-legend" aria-label="Légende des jours">
         <div class="legend-title">Couleurs des jours</div>
         <div class="legend-items" id="legendItems"></div>
@@ -983,21 +1055,39 @@
                 }
 
                 const weather = await response.json();
+                const timezone = weather.timezone || "auto";
+                const currentObservation = weather.current || {};
                 const forecastHours = weather.hourly?.time || [];
                 const nearestHourIndex = findNearestWeatherHour(forecastHours, weatherDate || new Date().toISOString());
-                const currentWeatherCode = weather.hourly?.weather_code?.[nearestHourIndex] ?? 0;
+
+                const currentWeatherCode = currentObservation.weather_code ?? weather.hourly?.weather_code?.[nearestHourIndex] ?? 0;
                 const currentDescription = getWeatherDescription(currentWeatherCode);
-                const currentTemperature = weather.hourly?.temperature_2m?.[nearestHourIndex] ?? 0;
-                const currentApparent = weather.hourly?.apparent_temperature?.[nearestHourIndex] ?? currentTemperature;
-                const currentWind = weather.hourly?.wind_speed_10m?.[nearestHourIndex] ?? 0;
-                const currentRain = weather.hourly?.precipitation_probability?.[nearestHourIndex] ?? 0;
+                const currentTemperature = currentObservation.temperature_2m ?? weather.hourly?.temperature_2m?.[nearestHourIndex] ?? 0;
+                const currentApparent = currentObservation.apparent_temperature ?? weather.hourly?.apparent_temperature?.[nearestHourIndex] ?? currentTemperature;
+                const currentWind = currentObservation.wind_speed_10m ?? weather.hourly?.wind_speed_10m?.[nearestHourIndex] ?? 0;
+                const currentRain = Number(currentObservation.precipitation ?? weather.hourly?.precipitation_probability?.[nearestHourIndex] ?? 0);
+
+                const localNow = new Date();
+                const localTimeLabel = new Intl.DateTimeFormat("fr-FR", {
+                    timeZone: timezone,
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }).format(localNow);
+
+                const localDateLabel = new Intl.DateTimeFormat("fr-FR", {
+                    timeZone: timezone,
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long"
+                }).format(localNow);
+
                 const weatherLabel = stepData?.jour
                     ? `Météo du jour ${stepData.jour}`
-                    : "Météo de l’étape";
+                    : "Météo locale";
 
                 const weatherDateLabel = (stepData?.date || weatherDate)
                     ? formatWeatherDate(stepData?.date || weatherDate)
-                    : "date estimée";
+                    : localDateLabel;
 
                 weatherLoading.hidden = true;
                 weatherContent.innerHTML = `
@@ -1005,7 +1095,7 @@
                         <div>
                             <div class="weather-kicker">${weatherLabel} · ${weatherDateLabel}</div>
                             <div class="weather-place">${escapeHTML(place || "Position actuelle")}</div>
-                            <div class="weather-updated">${forecastHours[nearestHourIndex]?.replace("T", " à ") || "Horaire indisponible"}</div>
+                            <div class="weather-updated">Heure locale : ${localTimeLabel}</div>
                         </div>
                         <div class="weather-icon" aria-hidden="true">${currentDescription[1]}</div>
                     </div>
@@ -1015,17 +1105,26 @@
                             <div class="weather-description">${currentDescription[0]}</div>
                             <div class="weather-details">
                                 <span>Ressenti ${Math.round(currentApparent)}°</span>
+                                <span>Vent ${Math.round(currentWind)} km/h</span>
                             </div>
                         </div>
+                    </div>
+                    <div class="weather-details" style="justify-content: space-between; margin-top: 4px;">
+                        <span>Pluie ${Math.round(currentRain)}%</span>
+                        <span>${localDateLabel}</span>
                     </div>
                     <div class="weather-forecast">
                         ${(weather.hourly?.time || []).slice(0, 4).map((time, index) => {
                     const hourlyCode = weather.hourly.weather_code[index];
                     const hourlyDescription = getWeatherDescription(hourlyCode);
                     const hourlyTemp = weather.hourly.temperature_2m[index];
+                    const hourlyTime = new Intl.DateTimeFormat("fr-FR", {
+                        timeZone: timezone,
+                        hour: "2-digit"
+                    }).format(new Date(time));
                     return `
                                 <div class="forecast-day">
-                                    ${new Date(time).toLocaleTimeString("fr-FR", { hour: "2-digit" }).replace(":00", "h")}
+                                    ${hourlyTime.replace(":00", "h").replace(" ", "")}
                                     <span class="forecast-icon" aria-hidden="true">${hourlyDescription[1]}</span>
                                     <span class="forecast-temperatures">${Math.round(hourlyTemp)}°</span>
                                 </div>
