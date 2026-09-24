@@ -282,9 +282,20 @@
         }
 
         @keyframes livePulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.25); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.25);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .live-frame {
@@ -825,11 +836,10 @@
     <aside class="live-card" aria-label="Live Twitch Nico La">
         <div class="live-header">
             <span class="live-status"><span class="live-dot"></span> Live</span>
-            <a href="https://www.twitch.tv/nico_la" target="_blank" rel="noreferrer" style="color:#625e57; text-decoration:none; font-weight:800;">nico_la</a>
+            <a href="https://www.twitch.tv/nico_la" target="_blank" rel="noreferrer"
+                style="color:#625e57; text-decoration:none; font-weight:800;">nico_la</a>
         </div>
-        <iframe
-            class="live-frame"
-            src="https://player.twitch.tv/?channel=nico_la&parent=localhost&muted=true"
+        <iframe class="live-frame" src="https://player.twitch.tv/?channel=nico_la&parent=localhost&muted=true"
             title="Live Twitch Nico La"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen>
