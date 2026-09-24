@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <!-- Leaflet -->
@@ -704,6 +704,178 @@
             border: 0;
             border-radius: 11px;
             background: #25231f;
+        }
+
+        /* Direction artistique Dakar Paris : vert affiche, creme papier, accents pop. */
+        :root {
+            --dp-green: #195534;
+            --dp-green-dark: #103b27;
+            --dp-cream: #f5e4bd;
+            --dp-yellow: #f2c14e;
+            --dp-red: #e84b37;
+            --dp-ink: #183b2a;
+        }
+
+        html,
+        body {
+            font-family: "DM Sans", sans-serif;
+            background: var(--dp-cream);
+        }
+
+        .header,
+        .progress,
+        .weather-card,
+        .map-tool,
+        .map-legend {
+            border: 2px solid var(--dp-ink);
+            border-radius: 6px;
+            background: var(--dp-cream);
+            box-shadow: 5px 5px 0 var(--dp-ink);
+            backdrop-filter: none;
+        }
+
+        .header {
+            padding: 18px 20px;
+        }
+
+        .eyebrow,
+        .progress-label,
+        .weather-kicker,
+        .legend-title {
+            color: var(--dp-red);
+            font-weight: 800;
+        }
+
+        .eyebrow,
+        .progress-label {
+            letter-spacing: 1.8px;
+        }
+
+        .header h1,
+        .progress-number,
+        .weather-place,
+        .weather-temperature {
+            font-family: "Bebas Neue", Impact, sans-serif;
+            letter-spacing: 0.5px;
+            color: var(--dp-green-dark);
+        }
+
+        .header h1 {
+            font-size: 38px;
+            line-height: 0.92;
+        }
+
+        .header p,
+        .weather-description,
+        .weather-details,
+        .weather-updated,
+        .forecast-day,
+        .map-legend,
+        .map-tool {
+            color: var(--dp-ink);
+        }
+
+        .header-meta span {
+            border-radius: 3px;
+            background: var(--dp-yellow);
+            color: var(--dp-ink);
+        }
+
+        .progress {
+            min-width: 112px;
+            background: var(--dp-green);
+            border-color: var(--dp-green-dark);
+            box-shadow: 5px 5px 0 var(--dp-green-dark);
+        }
+
+        .progress-number,
+        .progress-label {
+            color: var(--dp-cream);
+        }
+
+        .progress-number {
+            font-size: 42px;
+        }
+
+        .map-tools {
+            gap: 10px;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .map-tool {
+            border: 2px solid var(--dp-ink);
+            border-radius: 4px;
+            background: var(--dp-yellow);
+            box-shadow: 3px 3px 0 var(--dp-ink);
+        }
+
+        .map-tool.active,
+        .map-tool:hover,
+        .map-tool:focus-visible {
+            border-color: var(--dp-green-dark);
+            background: var(--dp-red);
+            color: #fff;
+            box-shadow: 3px 3px 0 var(--dp-green-dark);
+        }
+
+        .weather-card {
+            border-top: 8px solid var(--dp-red);
+            background: var(--dp-cream);
+        }
+
+        .weather-place {
+            font-size: 23px;
+        }
+
+        .weather-temperature {
+            font-size: 36px;
+        }
+
+        .weather-wind-arrow {
+            border-color: var(--dp-green);
+            background: rgba(25, 85, 52, 0.14);
+            color: var(--dp-green);
+            box-shadow: none;
+        }
+
+        .live-card {
+            border: 3px solid var(--dp-green-dark);
+            border-radius: 6px;
+            background: var(--dp-green-dark);
+            box-shadow: 5px 5px 0 var(--dp-red);
+        }
+
+        .live-preview-wrap,
+        .live-preview-wrap iframe,
+        #twitch-live,
+        #twitch-live iframe {
+            border-radius: 3px !important;
+        }
+
+        .live-fallback {
+            background: var(--dp-green);
+        }
+
+        .live-fallback a {
+            color: var(--dp-cream);
+            font-family: "Bebas Neue", Impact, sans-serif;
+            font-size: 25px;
+            letter-spacing: 1px;
+        }
+
+        .map-legend {
+            border-color: var(--dp-green-dark);
+            background: var(--dp-green);
+            box-shadow: 5px 5px 0 var(--dp-green-dark);
+        }
+
+        .legend-title {
+            font-family: "Bebas Neue", Impact, sans-serif;
+            font-size: 21px;
+            letter-spacing: 1px;
+            color: var(--dp-cream);
         }
 
         /* =========================
