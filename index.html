@@ -854,19 +854,13 @@
                 return;
             }
 
-            const parentHosts = [
-                "localhost",
-                "127.0.0.1",
-                window.location.hostname
-            ].filter(Boolean);
-
-            const uniqueParents = [...new Set(parentHosts)];
+            const currentHost = window.location.hostname || "localhost";
 
             const player = new window.Twitch.Player("twitch-live", {
                 channel: "nico_la",
                 width: "100%",
                 height: "150",
-                parent: uniqueParents,
+                parent: [currentHost],
                 autoplay: true,
                 muted: true,
                 controls: false
@@ -876,6 +870,11 @@
                 player.setMuted(true);
                 player.play();
             });
+
+            window.setTimeout(() => {
+                player.setMuted(true);
+                player.play();
+            }, 1200);
         }
 
         /* ==================================================
