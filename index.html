@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Le parcours — Dakar → Paris</title>
+    <meta name="description"
+        content="31 jours à pied et en stop de Dakar à Paris. Suivez chaque étape du voyage sur la carte.">
+    <meta name="theme-color" content="#195534">
+    <meta property="og:title" content="Le parcours — Dakar → Paris">
+    <meta property="og:description" content="31 jours à pied et en stop. Suivez chaque étape du voyage.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1140,6 +1147,528 @@
                 width: 100%;
             }
         }
+
+        /* ==========================================================
+           FINITIONS & ANIMATIONS
+           (couche ajoutée par-dessus la direction artistique existante)
+        ========================================================== */
+
+        :root {
+            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--dp-red);
+            outline-offset: 2px;
+        }
+
+        /* Bebas Neue n'a qu'une graisse : on évite le faux gras */
+        .header h1,
+        .progress-number,
+        .weather-place,
+        .weather-temperature,
+        .legend-title,
+        .live-fallback a,
+        .popup-title {
+            font-weight: 400;
+        }
+
+        /* ---------- Carte ---------- */
+
+        .leaflet-container {
+            background: #eadbb2;
+            font-family: "DM Sans", sans-serif;
+        }
+
+        .leaflet-tile-pane {
+            filter: sepia(0.22) saturate(0.92) contrast(1.03);
+        }
+
+        /* ---------- Loader ---------- */
+
+        .loading {
+            flex-direction: column;
+            background: var(--dp-green);
+            color: var(--dp-cream);
+            transition: opacity 0.7s ease 0.1s, visibility 0s linear 0.8s;
+        }
+
+        .loading.hidden {
+            visibility: hidden;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .loader-title {
+            font-family: "Bebas Neue", Impact, sans-serif;
+            font-size: clamp(48px, 10vw, 96px);
+            line-height: 0.95;
+            letter-spacing: 3px;
+            font-weight: 400;
+            animation: cardIn 0.8s var(--ease-out) backwards;
+        }
+
+        .loader-title b {
+            display: inline-block;
+            color: var(--dp-yellow);
+            font-weight: 400;
+            animation: arrowNudge 1.3s ease-in-out infinite;
+        }
+
+        .loader-track {
+            position: relative;
+            width: min(280px, 70vw);
+            height: 5px;
+            margin: 26px auto 14px;
+            overflow: hidden;
+            border-radius: 99px;
+            background: rgba(245, 228, 189, 0.22);
+        }
+
+        .loader-track::after {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 38%;
+            border-radius: inherit;
+            background: var(--dp-yellow);
+            animation: loaderSlide 1.3s ease-in-out infinite;
+        }
+
+        .loader-text {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        @keyframes loaderSlide {
+            0% {
+                transform: translateX(-110%);
+            }
+
+            100% {
+                transform: translateX(290%);
+            }
+        }
+
+        @keyframes arrowNudge {
+
+            0%,
+            100% {
+                transform: translateX(-5px);
+            }
+
+            50% {
+                transform: translateX(7px);
+            }
+        }
+
+        /* ---------- Entrée des cartes ---------- */
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(22px) scale(0.97);
+            }
+        }
+
+        body:not(.ready) .rail>* {
+            opacity: 0;
+        }
+
+        .ready .rail>* {
+            animation: cardIn 0.8s var(--ease-out) backwards;
+        }
+
+        .ready .rail-left> :nth-child(1) {
+            animation-delay: 0.25s;
+        }
+
+        .ready .rail-left> :nth-child(2) {
+            animation-delay: 0.42s;
+        }
+
+        .ready .rail-left> :nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .ready .rail-top-right> :nth-child(1) {
+            animation-delay: 0.35s;
+        }
+
+        .ready .rail-top-right> :nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .ready .rail .weather-card,
+        .ready .rail .journey-video {
+            animation-delay: 0s;
+        }
+
+        /* ---------- Header ---------- */
+
+        .header {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header::after {
+            content: "";
+            position: absolute;
+            right: -34px;
+            bottom: -44px;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: var(--dp-yellow);
+            opacity: 0.4;
+            animation: sunFloat 7s ease-in-out infinite;
+        }
+
+        @keyframes sunFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-8px, -6px) scale(1.06);
+            }
+        }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--dp-red);
+            animation: liveDot 1.8s ease-out infinite;
+        }
+
+        @keyframes liveDot {
+            0% {
+                box-shadow: 0 0 0 0 rgba(232, 75, 55, 0.6);
+            }
+
+            70%,
+            100% {
+                box-shadow: 0 0 0 9px rgba(232, 75, 55, 0);
+            }
+        }
+
+        /* ---------- Compteur ---------- */
+
+        .progress-number {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-bar {
+            height: 6px;
+            margin-top: 10px;
+            overflow: hidden;
+            border-radius: 99px;
+            background: rgba(245, 228, 189, 0.22);
+        }
+
+        .progress-bar i {
+            display: block;
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--dp-yellow);
+            transition: width 1.6s var(--ease-out);
+        }
+
+        /* ---------- Boutons : effet "pressé" ---------- */
+
+        .map-tool {
+            transition:
+                transform 0.18s var(--ease-out),
+                box-shadow 0.18s var(--ease-out),
+                background-color 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .map-tool:hover,
+        .map-tool:focus-visible {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 var(--dp-green-dark);
+        }
+
+        .map-tool:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0 var(--dp-green-dark);
+        }
+
+        /* ---------- Légende ---------- */
+
+        .legend-item {
+            animation: cardIn 0.5s var(--ease-out) backwards;
+            animation-delay: calc(0.9s + var(--i, 0) * 45ms);
+            transition: transform 0.2s var(--ease-out);
+        }
+
+        .legend-item:hover {
+            transform: translateX(4px);
+        }
+
+        .legend-swatch {
+            transition: transform 0.3s var(--ease-spring);
+        }
+
+        .legend-item:hover .legend-swatch {
+            transform: scale(1.3) rotate(8deg);
+        }
+
+        /* ---------- Marqueurs ---------- */
+
+        .step-marker,
+        .current-marker {
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0);
+            transition:
+                transform 0.6s var(--ease-spring),
+                opacity 0.3s ease;
+        }
+
+        .step-marker {
+            background: var(--mk, #25231f);
+        }
+
+        .marker-visible .step-marker,
+        .marker-visible .current-marker {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .marker-visible .step-marker:hover {
+            transform: scale(1.45);
+        }
+
+        .marker-visible .current-marker:hover {
+            transform: scale(1.15);
+        }
+
+        .current-marker::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 34px;
+            height: 34px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 2px solid rgba(227, 93, 63, 0.45);
+            animation: pulse 2s 1s infinite;
+        }
+
+        .next-step-marker {
+            animation: markerPop 0.7s var(--ease-spring) 1.4s backwards;
+        }
+
+        @keyframes markerPop {
+            from {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        /* ---------- Tracés ---------- */
+
+        .leaflet-overlay-pane path.route-in {
+            animation: routeIn 0.9s var(--ease-out) backwards;
+            transition: stroke-width 0.2s ease, stroke-opacity 0.2s ease;
+        }
+
+        .leaflet-overlay-pane path.route-in[stroke="#8e8a84"] {
+            animation:
+                routeIn 0.9s var(--ease-out) backwards,
+                dashFlow 1.4s linear infinite;
+        }
+
+        @keyframes routeIn {
+            from {
+                stroke-opacity: 0;
+                stroke-width: 0;
+            }
+        }
+
+        @keyframes dashFlow {
+            to {
+                stroke-dashoffset: -34;
+            }
+        }
+
+        /* ---------- Popups ---------- */
+
+        .leaflet-popup-content-wrapper {
+            border: 2px solid var(--dp-ink);
+            border-radius: 6px;
+            background: var(--dp-cream);
+            box-shadow: 5px 5px 0 var(--dp-ink);
+            transform-origin: 50% 100%;
+            animation: popupIn 0.4s var(--ease-spring) backwards;
+        }
+
+        .leaflet-popup-tip {
+            border: 2px solid var(--dp-ink);
+            background: var(--dp-cream);
+            box-shadow: none;
+        }
+
+        @keyframes popupIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.92);
+            }
+        }
+
+        .leaflet-popup-content {
+            width: 270px !important;
+        }
+
+        .popup {
+            padding: 0 0 16px;
+        }
+
+        .popup::before {
+            content: "";
+            display: block;
+            height: 10px;
+            margin-bottom: 14px;
+            border-bottom: 2px solid var(--dp-ink);
+            background: var(--day, var(--dp-red));
+        }
+
+        .popup>* {
+            margin-right: 18px;
+            margin-left: 18px;
+        }
+
+        .popup-day {
+            padding: 3px 9px;
+            border-radius: 3px;
+            background: var(--day, var(--dp-red));
+            color: #fff;
+            letter-spacing: 1.4px;
+        }
+
+        .popup-title {
+            margin-top: 4px;
+            font-family: "Bebas Neue", Impact, sans-serif;
+            font-size: 30px;
+            line-height: 1;
+            letter-spacing: 0.5px;
+            color: var(--dp-green-dark);
+        }
+
+        .popup-description {
+            color: var(--dp-ink);
+            opacity: 0.85;
+        }
+
+        .popup-date {
+            color: var(--dp-red);
+            letter-spacing: 0.4px;
+        }
+
+        .leaflet-container a.leaflet-popup-close-button {
+            top: 16px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            font-size: 22px;
+            line-height: 22px;
+            font-weight: 800;
+            color: var(--dp-ink);
+            transition: transform 0.25s var(--ease-spring), color 0.2s ease;
+        }
+
+        .leaflet-container a.leaflet-popup-close-button:hover {
+            transform: rotate(90deg);
+            color: var(--dp-red);
+        }
+
+        /* ---------- Contrôles Leaflet ---------- */
+
+        .leaflet-bar,
+        .leaflet-touch .leaflet-bar {
+            overflow: hidden;
+            border: 2px solid var(--dp-ink);
+            border-radius: 6px;
+            box-shadow: 3px 3px 0 var(--dp-ink);
+        }
+
+        .leaflet-bar a,
+        .leaflet-touch .leaflet-bar a {
+            width: 36px;
+            height: 36px;
+            line-height: 34px;
+            border-bottom: 2px solid var(--dp-ink);
+            background: var(--dp-cream);
+            color: var(--dp-ink);
+            font-weight: 800;
+            transition: background-color 0.15s ease;
+        }
+
+        .leaflet-bar a:last-child {
+            border-bottom: 0;
+        }
+
+        .leaflet-bar a:hover,
+        .leaflet-touch .leaflet-bar a:hover {
+            background: var(--dp-yellow);
+            color: var(--dp-ink);
+        }
+
+        .leaflet-control-attribution {
+            background: rgba(245, 228, 189, 0.88) !important;
+            color: var(--dp-ink);
+            font-size: 10px;
+        }
+
+        .leaflet-control-attribution a {
+            color: var(--dp-green);
+        }
+
+        /* ---------- Accessibilité : mouvement réduit ---------- */
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-delay: 0s !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 
@@ -1147,7 +1676,11 @@
 
     <!-- Loading -->
     <div class="loading" id="loading">
-        Le parcours se charge...
+        <div class="loader">
+            <div class="loader-title">Dakar <b>→</b> Paris</div>
+            <div class="loader-track"></div>
+            <div class="loader-text">Le parcours se charge...</div>
+        </div>
     </div>
 
     <div class="rail rail-left">
@@ -1196,6 +1729,7 @@
         <div class="progress">
             <span class="progress-number" id="currentDay">—</span>
             <span class="progress-label">jours parcourus</span>
+            <div class="progress-bar" aria-hidden="true"><i id="progressFill"></i></div>
         </div>
 
         <div class="map-tools" aria-label="Outils de carte">
@@ -1260,9 +1794,9 @@
 
             zoomControl: false,
 
-            center: [22, -5],
+            center: [28, -4],
 
-            zoom: 4
+            zoom: 3
 
         });
 
@@ -1270,9 +1804,10 @@
         /* Fond de carte */
 
         L.tileLayer(
-            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
             {
-                attribution: '&copy; OpenStreetMap contributors',
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: "abcd",
                 maxZoom: 19
             }
         ).addTo(map);
@@ -1288,6 +1823,103 @@
 
         window.weatherOverlayLayer = null;
         window.weatherOverlayMode = null;
+
+        /* ==================================================
+           HELPERS UI / ANIMATIONS
+        ================================================== */
+
+        const TOTAL_DAYS = 31;
+
+        const reduceMotion =
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        const DAY_COLORS = [
+            "#e35d3f",
+            "#3f7cac",
+            "#5f8f5f",
+            "#8b6fa8",
+            "#c28b45",
+            "#2f8f9d",
+            "#b76565",
+            "#77716a"
+        ];
+
+        function getDayColor(jour) {
+            const day = Number(jour);
+            if (!Number.isFinite(day) || day <= 0) {
+                return "#8e8a84";
+            }
+            return DAY_COLORS[(day - 1) % DAY_COLORS.length];
+        }
+
+        /* Vol fluide vers le parcours complet */
+        function flyToJourney(bounds, duration) {
+            const options = {
+                paddingTopLeft: [50, 150],
+                paddingBottomRight: [50, 100]
+            };
+
+            if (reduceMotion) {
+                map.fitBounds(bounds, options);
+                return;
+            }
+
+            map.flyToBounds(bounds, { ...options, duration: duration || 1.6 });
+        }
+
+        /* Compteur animé + barre de progression */
+        function setProgress(el, value) {
+            const target = Number(value);
+            const fill = document.getElementById("progressFill");
+
+            if (value === "" || value === null || value === undefined || !Number.isFinite(target)) {
+                el.textContent = value || "—";
+                return;
+            }
+
+            const ratio = Math.min(100, Math.max(0, (target / TOTAL_DAYS) * 100));
+
+            if (reduceMotion || target === 0) {
+                el.textContent = target;
+                if (fill) fill.style.width = ratio + "%";
+                return;
+            }
+
+            el.textContent = "0";
+
+            setTimeout(() => {
+                if (fill) fill.style.width = ratio + "%";
+
+                const duration = 1400;
+                const start = performance.now();
+
+                function tick(now) {
+                    const t = Math.min(1, (now - start) / duration);
+                    const eased = 1 - Math.pow(1 - t, 3);
+                    el.textContent = Math.round(target * eased);
+                    if (t < 1) requestAnimationFrame(tick);
+                }
+
+                requestAnimationFrame(tick);
+            }, 650);
+        }
+
+        /* Apparition progressive des tracés */
+        function animateRoutePath(layer) {
+            const mark = item => {
+                const el = item.getElement && item.getElement();
+                if (el) el.classList.add("route-in");
+            };
+
+            if (typeof layer.eachLayer === "function") {
+                layer.eachLayer(mark);
+            } else {
+                mark(layer);
+            }
+        }
+
+        /* Sécurité : l'interface finit toujours par s'afficher */
+        setTimeout(() => document.body.classList.add("ready"), 8000);
 
         const weatherCard =
             document.getElementById("weatherCard");
@@ -1531,10 +2163,7 @@
             .getElementById("fitJourney")
             .addEventListener("click", () => {
                 if (journeyBounds) {
-                    map.fitBounds(journeyBounds, {
-                        paddingTopLeft: [50, 150],
-                        paddingBottomRight: [50, 100]
-                    });
+                    flyToJourney(journeyBounds, 1.4);
                 }
             });
 
@@ -1611,14 +2240,14 @@
            ICÔNES
         ================================================== */
 
-        function createNormalIcon() {
+        function createNormalIcon(color) {
 
             return L.divIcon({
 
                 className: "",
 
                 html:
-                    `<div class="step-marker"></div>`,
+                    `<div class="step-marker" style="--mk:${color || "#25231f"}"></div>`,
 
                 iconSize: [14, 14],
 
@@ -1690,7 +2319,7 @@
 
             return `
 
-                <div class="popup">
+                <div class="popup" style="--day:${getDayColor(etape.jour)}">
 
                     <div class="popup-day">
                         Jour ${escapeHTML(etape.jour)}
@@ -1936,6 +2565,8 @@
                 loading.classList.add(
                     "hidden"
                 );
+
+                document.body.classList.add("ready");
 
 
             } catch (error) {
@@ -2315,6 +2946,8 @@
                         }
                     ).addTo(map);
 
+                    animateRoutePath(routeLayer);
+
                     if (routeColors[i] && routeColors[i].day) {
                         routeLayer.on("mouseover", () => {
                             routeLayer.setStyle({
@@ -2375,6 +3008,8 @@
 
                         }
                     ).addTo(map);
+
+                    animateRoutePath(fallbackRoute);
 
                     if (routeColors[i] && routeColors[i].day) {
                         fallbackRoute.on("mouseover", () => {
@@ -2469,7 +3104,7 @@
                             icon:
                                 isCurrent
                                     ? createCurrentIcon()
-                                    : createNormalIcon(),
+                                    : createNormalIcon(getDayColor(etape.jour)),
 
                             zIndexOffset:
                                 isCurrent
@@ -2538,16 +3173,7 @@
                 );
             });
 
-            const dayColors = [
-                "#e35d3f",
-                "#3f7cac",
-                "#5f8f5f",
-                "#8b6fa8",
-                "#c28b45",
-                "#2f8f9d",
-                "#b76565",
-                "#77716a"
-            ];
+            const dayColors = DAY_COLORS;
 
             const daysPresent = [...new Set(
                 etapes
@@ -2556,8 +3182,8 @@
             )];
             const legendItems = document.getElementById("legendItems");
 
-            legendItems.innerHTML = daysPresent.map(day => `
-                <div class="legend-item">
+            legendItems.innerHTML = daysPresent.map((day, idx) => `
+                <div class="legend-item" style="--i:${idx}">
                     <span class="legend-swatch" style="background:${dayColors[(day - 1) % dayColors.length]}"></span>
                     <span>Jour ${escapeHTML(day)}</span>
                 </div>
@@ -2565,7 +3191,7 @@
 
             if (nextStep && Number(nextStep.jour) === 0) {
                 legendItems.innerHTML += `
-                    <div class="legend-item">
+                    <div class="legend-item" style="--i:${daysPresent.length}">
                         <span class="legend-swatch" style="background:#8e8a84"></span>
                         <span>Prochaine étape</span>
                     </div>
@@ -2599,8 +3225,10 @@
             const currentDay =
                 document.getElementById("currentDay");
 
-            currentDay.textContent =
-                currentStep?.jour ?? etapes[latestIndex]?.jour ?? "";
+            setProgress(
+                currentDay,
+                currentStep?.jour ?? etapes[latestIndex]?.jour ?? ""
+            );
 
             const latestCoordinateValue = currentPoint || coordinates[latestIndex] || coordinates[coordinates.length - 1] || null;
 
@@ -2641,13 +3269,7 @@
                 journeyBounds = bounds;
 
 
-                map.fitBounds(
-                    bounds,
-                    {
-                        paddingTopLeft: [50, 150],
-                        paddingBottomRight: [50, 100]
-                    }
-                );
+                flyToJourney(bounds, 2.6);
 
             }
 
