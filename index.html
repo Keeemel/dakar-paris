@@ -2100,6 +2100,92 @@
                 transition-delay: 0s !important;
             }
         }
+
+        /* ==========================================================
+           CURSEUR "ÉPINGLE DE VOYAGE"
+        ========================================================== */
+
+        :root {
+            --cursor-pin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='33' rx='6' ry='1.8' fill='rgba(24,59,42,0.35)'/%3E%3Cpath d='M18 32C18 32 8 21 8 14.5a10 10 0 0 1 20 0C28 21 18 32 18 32z' fill='%23e84b37' stroke='%23183b2a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='14.5' r='3.8' fill='%23f5e4bd' stroke='%23183b2a' stroke-width='1.5'/%3E%3C/svg%3E");
+            --cursor-pin-lift: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='33' rx='4' ry='1.2' fill='rgba(24,59,42,0.3)'/%3E%3Cg transform='translate(0,-4)'%3E%3Cpath d='M18 32C18 32 8 21 8 14.5a10 10 0 0 1 20 0C28 21 18 32 18 32z' fill='%23f2c14e' stroke='%23183b2a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='14.5' r='3.8' fill='%23f5e4bd' stroke='%23183b2a' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        html,
+        body,
+        .leaflet-container,
+        .leaflet-grab,
+        .leaflet-interactive,
+        .leaflet-marker-icon,
+        .leaflet-bar a,
+        .leaflet-control a,
+        .leaflet-popup-close-button,
+        .map-tool,
+        .legend-title,
+        .legend-item,
+        .weather-close,
+        .journey-video-close,
+        .step-marker,
+        .current-marker,
+        .next-step-marker,
+        .live-fallback a,
+        a,
+        button {
+            cursor: var(--cursor-pin) 18 32, pointer !important;
+        }
+
+        /* Pendant le déplacement de la carte : l'épingle se soulève */
+        .leaflet-dragging,
+        .leaflet-dragging * {
+            cursor: var(--cursor-pin-lift) 18 32, move !important;
+        }
+
+        /* ==========================================================
+           LOADER : vraie barre de progression
+        ========================================================== */
+
+        .loader-track {
+            width: min(320px, 74vw);
+            height: 8px;
+            margin: 28px auto 12px;
+        }
+
+        .loader-track::after {
+            display: none;
+        }
+
+        .loader-track i {
+            display: block;
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--dp-yellow), #ffe59a, var(--dp-yellow));
+            background-size: 200% 100%;
+            transition: width 0.7s var(--ease-out);
+            animation: shimmer 1.2s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: -200% 0;
+            }
+        }
+
+        .loader-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            width: min(320px, 74vw);
+            margin: 0 auto;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        #loaderPct {
+            font-variant-numeric: tabular-nums;
+        }
     </style>
 </head>
 
@@ -2109,8 +2195,11 @@
     <div class="loading" id="loading">
         <div class="loader">
             <div class="loader-title">Dakar <b>→</b> Paris</div>
-            <div class="loader-track"></div>
-            <div class="loader-text">Le parcours se charge...</div>
+            <div class="loader-track"><i id="loaderFill"></i></div>
+            <div class="loader-meta">
+                <span id="loaderText">Connexion…</span>
+                <span id="loaderPct">0%</span>
+            </div>
         </div>
     </div>
 
@@ -2392,7 +2481,28 @@
             }, 25000);
         }
 
-        setTimeout(markReady, 9000);
+        setTimeout(markReady, 14000);
+
+        /* ---------- Progression du loader ---------- */
+
+        const loaderStart = performance.now();
+        let loaderValue = 0;
+
+        function setLoaderProgress(value, label) {
+            loaderValue = Math.max(loaderValue, Math.min(100, value));
+
+            const fill = document.getElementById("loaderFill");
+            const pct = document.getElementById("loaderPct");
+            const text = document.getElementById("loaderText");
+
+            if (fill) fill.style.width = loaderValue + "%";
+            if (pct) pct.textContent = Math.round(loaderValue) + "%";
+            if (text && label) text.textContent = label;
+        }
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            setLoaderProgress(8, "Connexion au parcours…");
+        }));
 
         /* ---------- Compteur animé ---------- */
 
@@ -3163,6 +3273,8 @@
                 const etapes =
                     await response.json();
 
+                setLoaderProgress(30, "Étapes récupérées");
+
 
                 console.log(
                     "Étapes récupérées :",
@@ -3212,6 +3324,13 @@
                     etapesValides
                 );
 
+
+                setLoaderProgress(100, "C'est parti !");
+
+                await sleep(Math.max(
+                    reduceMotion ? 0 : 800,
+                    (reduceMotion ? 0 : 2800) - (performance.now() - loaderStart)
+                ));
 
                 loading.classList.add(
                     "hidden"
@@ -3480,9 +3599,10 @@
             return findRailwayPath([railwayWay], start, end);
         }
 
-        async function drawRoute(coordinates, routeColors, railwaySegments = [], stepIds = []) {
+        async function drawRoute(coordinates, routeColors, railwaySegments = [], stepIds = [], onProgress = null, resolvePrefetch = null) {
 
             if (coordinates.length < 2) {
+                if (resolvePrefetch) resolvePrefetch();
                 return;
             }
 
@@ -3510,6 +3630,17 @@
                 pending.catch(() => { });
                 geometries.push(pending);
             }
+
+            let settled = 0;
+
+            Promise.all(geometries.map(pending =>
+                pending.then(() => { }, () => { }).then(() => {
+                    settled++;
+                    if (onProgress) onProgress(settled, total);
+                })
+            )).then(() => {
+                if (resolvePrefetch) resolvePrefetch();
+            });
 
             /*
              * 2) On attend la fin de l'intro, puis on dessine
@@ -3676,14 +3807,20 @@
         /* Les tracés s'animent l'un après l'autre, jamais en même temps */
         let routeChain = Promise.resolve();
 
-        function drawRouteInBackground(coordinates, routeColors, railwaySegments = [], stepIds = []) {
+        function drawRouteInBackground(coordinates, routeColors, railwaySegments = [], stepIds = [], onProgress = null) {
+            let resolvePrefetch;
+            const prefetched = new Promise(resolve => { resolvePrefetch = resolve; });
+
             routeChain = routeChain
-                .then(() => drawRoute(coordinates, routeColors, railwaySegments, stepIds))
+                .then(() => drawRoute(coordinates, routeColors, railwaySegments, stepIds, onProgress, resolvePrefetch))
                 .catch(error => {
                     console.error("Impossible d’afficher les tracés.", error);
                     document.getElementById("routeStatus").textContent =
                         "Tracés indisponibles";
+                    resolvePrefetch();
                 });
+
+            return prefetched;
         }
 
 
@@ -3779,6 +3916,8 @@
             });
 
 
+            setLoaderProgress(45, "Placement des étapes…");
+
             const coordinates = etapes.map(etape => [
                 Number(etape.latitude),
                 Number(etape.longitude)
@@ -3854,7 +3993,16 @@
 
             });
 
-            drawRouteInBackground(routeCoordinates, routeColors, railwaySegments, routeSteps.map(step => step.id));
+            const routePrefetch = drawRouteInBackground(
+                routeCoordinates,
+                routeColors,
+                railwaySegments,
+                routeSteps.map(step => step.id),
+                (done, total) => setLoaderProgress(
+                    45 + Math.round(50 * done / total),
+                    `Calcul du tracé ${done}/${total}`
+                )
+            );
 
 
             /*
@@ -3895,6 +4043,9 @@
                     </div>
                 `);
             }
+
+            /* On laisse le loader affiché le temps de calculer les routes */
+            await Promise.race([routePrefetch, sleep(7000)]);
 
             loadWeather(
                 latestCoordinateValue,
