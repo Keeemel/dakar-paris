@@ -1802,6 +1802,16 @@
             animation: dashFlow 1.4s linear infinite;
         }
 
+        @media (pointer: coarse) {
+            .leaflet-tile-pane {
+                filter: none;
+            }
+
+            .leaflet-overlay-pane path.route-flow {
+                animation: none;
+            }
+        }
+
         @keyframes dashFlow {
             to {
                 stroke-dashoffset: -34;
@@ -2105,38 +2115,40 @@
            CURSEUR "ÉPINGLE DE VOYAGE"
         ========================================================== */
 
-        :root {
-            --cursor-pin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='33' rx='6' ry='1.8' fill='rgba(24,59,42,0.35)'/%3E%3Cpath d='M18 32C18 32 8 21 8 14.5a10 10 0 0 1 20 0C28 21 18 32 18 32z' fill='%23e84b37' stroke='%23183b2a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='14.5' r='3.8' fill='%23f5e4bd' stroke='%23183b2a' stroke-width='1.5'/%3E%3C/svg%3E");
-            --cursor-pin-lift: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='33' rx='4' ry='1.2' fill='rgba(24,59,42,0.3)'/%3E%3Cg transform='translate(0,-4)'%3E%3Cpath d='M18 32C18 32 8 21 8 14.5a10 10 0 0 1 20 0C28 21 18 32 18 32z' fill='%23f2c14e' stroke='%23183b2a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='14.5' r='3.8' fill='%23f5e4bd' stroke='%23183b2a' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E");
-        }
+        @media (hover: hover) and (pointer: fine) {
+            :root {
+                --cursor-pin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='33' rx='6' ry='1.8' fill='rgba(24,59,42,0.35)'/%3E%3Cpath d='M18 32C18 32 8 21 8 14.5a10 10 0 0 1 20 0C28 21 18 32 18 32z' fill='%23e84b37' stroke='%23183b2a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='14.5' r='3.8' fill='%23f5e4bd' stroke='%23183b2a' stroke-width='1.5'/%3E%3C/svg%3E");
+                --cursor-pin-lift: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='33' rx='4' ry='1.2' fill='rgba(24,59,42,0.3)'/%3E%3Cg transform='translate(0,-4)'%3E%3Cpath d='M18 32C18 32 8 21 8 14.5a10 10 0 0 1 20 0C28 21 18 32 18 32z' fill='%23f2c14e' stroke='%23183b2a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='14.5' r='3.8' fill='%23f5e4bd' stroke='%23183b2a' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E");
+            }
 
-        html,
-        body,
-        .leaflet-container,
-        .leaflet-grab,
-        .leaflet-interactive,
-        .leaflet-marker-icon,
-        .leaflet-bar a,
-        .leaflet-control a,
-        .leaflet-popup-close-button,
-        .map-tool,
-        .legend-title,
-        .legend-item,
-        .weather-close,
-        .journey-video-close,
-        .step-marker,
-        .current-marker,
-        .next-step-marker,
-        .live-fallback a,
-        a,
-        button {
-            cursor: var(--cursor-pin) 18 32, pointer !important;
-        }
+            html,
+            body,
+            .leaflet-container,
+            .leaflet-grab,
+            .leaflet-interactive,
+            .leaflet-marker-icon,
+            .leaflet-bar a,
+            .leaflet-control a,
+            .leaflet-popup-close-button,
+            .map-tool,
+            .legend-title,
+            .legend-item,
+            .weather-close,
+            .journey-video-close,
+            .step-marker,
+            .current-marker,
+            .next-step-marker,
+            .live-fallback a,
+            a,
+            button {
+                cursor: var(--cursor-pin) 18 32, pointer !important;
+            }
 
-        /* Pendant le déplacement de la carte : l'épingle se soulève */
-        .leaflet-dragging,
-        .leaflet-dragging * {
-            cursor: var(--cursor-pin-lift) 18 32, move !important;
+            /* Pendant le déplacement, l'épingle du curseur se soulève. */
+            .leaflet-dragging,
+            .leaflet-dragging * {
+                cursor: var(--cursor-pin-lift) 18 32, move !important;
+            }
         }
 
         /* ==========================================================
@@ -2631,6 +2643,10 @@
             return window.matchMedia(
                 "(max-width: 700px), (max-width: 900px) and (max-height: 500px)"
             ).matches;
+        }
+
+        function supportsRouteHover() {
+            return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
         }
 
         function sleep(ms) {
@@ -3942,7 +3958,8 @@
                                 dashArray: isRailway ? null : "10 7",
                                 lineCap: "round",
                                 lineJoin: "round"
-                            }
+                            },
+                            interactive: supportsRouteHover()
                         }
                     ).addTo(map);
 
@@ -3975,12 +3992,13 @@
                             opacity: baseOpacity,
                             dashArray: "10 7",
                             lineCap: "round",
-                            lineJoin: "round"
+                            lineJoin: "round",
+                            interactive: supportsRouteHover()
                         }
                     ).addTo(map);
                 }
 
-                if (route.day) {
+                if (route.day && supportsRouteHover()) {
                     const baseWeight = isRailway ? 6 : 5;
 
                     layer.on("mouseover", () => {
