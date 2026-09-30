@@ -2186,6 +2186,268 @@
         #loaderPct {
             font-variant-numeric: tabular-nums;
         }
+
+        /* ---------- Mobile layout ---------- */
+
+        @media (max-width: 700px) {
+
+            html,
+            body {
+                min-height: 100%;
+                overscroll-behavior: none;
+            }
+
+            #map {
+                height: 100vh;
+                height: 100dvh;
+            }
+
+            .ui-left {
+                top: calc(10px + env(safe-area-inset-top, 0px));
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                left: calc(10px + env(safe-area-inset-left, 0px));
+                gap: 8px;
+            }
+
+            .ui .header {
+                padding: 10px 12px;
+            }
+
+            .ui .header h1 {
+                font-size: 30px;
+            }
+
+            .ui .header-meta {
+                gap: 6px;
+                margin-top: 6px;
+            }
+
+            .ui .header-meta span {
+                padding: 4px 7px;
+                font-size: 10px;
+            }
+
+            .ui-right {
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                left: calc(10px + env(safe-area-inset-left, 0px));
+                gap: 8px;
+            }
+
+            .ui .hud-row {
+                gap: 8px;
+            }
+
+            .ui .hud-row .progress {
+                gap: 5px;
+                padding: 7px 9px;
+            }
+
+            .ui .hud-row .progress-number {
+                font-size: 30px;
+            }
+
+            .ui .hud-row .progress-label {
+                font-size: 9px;
+                letter-spacing: 0.8px;
+            }
+
+            .ui .hud-row .map-tools {
+                gap: 5px;
+            }
+
+            .ui .map-tools .map-tool {
+                min-width: 0;
+                min-height: 48px;
+                padding: 0 5px;
+                font-size: 10px;
+                letter-spacing: 0;
+            }
+
+            .ui .weather-card {
+                max-height: min(42dvh, 360px);
+                padding: 13px;
+                overscroll-behavior: contain;
+            }
+
+            .ui .live-card {
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+                left: calc(10px + env(safe-area-inset-left, 0px));
+                max-height: calc(100dvh - 150px);
+            }
+
+            .journey-video {
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+                left: calc(10px + env(safe-area-inset-left, 0px));
+                width: auto;
+                padding: 9px;
+            }
+
+            .journey-video-header {
+                margin-bottom: 6px;
+            }
+
+            .journey-video-close,
+            .weather-close {
+                width: 40px;
+                height: 40px;
+            }
+
+            .leaflet-popup-content {
+                width: min(260px, calc(100vw - 88px)) !important;
+            }
+
+            .leaflet-bottom.leaflet-right {
+                margin-right: calc(4px + env(safe-area-inset-right, 0px));
+                margin-bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .leaflet-control-attribution {
+                font-size: 9px;
+            }
+        }
+
+        @media (max-width: 360px) {
+
+            .ui .header h1 {
+                font-size: 27px;
+            }
+
+            .ui .header-meta span {
+                font-size: 9px;
+            }
+
+            .ui .hud-row .progress {
+                padding-right: 7px;
+                padding-left: 7px;
+            }
+
+            .ui .hud-row .progress-label {
+                max-width: 62px;
+                line-height: 1.15;
+            }
+
+            .ui .map-tools .map-tool {
+                padding: 0 3px;
+                font-size: 9px;
+            }
+        }
+
+        @media (max-width: 900px) and (max-height: 500px) {
+
+            .ui-left {
+                top: calc(10px + env(safe-area-inset-top, 0px));
+                right: auto;
+                left: calc(10px + env(safe-area-inset-left, 0px));
+                width: min(300px, 38vw);
+                max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px));
+                overflow: hidden auto;
+            }
+
+            .ui .header {
+                padding: 8px 10px;
+            }
+
+            .ui .header h1 {
+                font-size: 24px;
+            }
+
+            .ui .header p,
+            .ui .header-meta {
+                display: none;
+            }
+
+            .ui .map-legend {
+                display: none;
+            }
+
+            .ui-right {
+                top: auto;
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+                left: auto;
+                width: min(390px, 48vw);
+                max-height: 76dvh;
+                flex-direction: column-reverse;
+            }
+
+            .ui .hud-row {
+                gap: 8px;
+            }
+
+            .ui .hud-row .progress {
+                flex: 0 0 auto;
+                width: auto;
+                flex-direction: row;
+                align-items: baseline;
+                gap: 6px;
+                padding: 7px 9px;
+            }
+
+            .ui .hud-row .progress-number {
+                font-size: 30px;
+            }
+
+            .ui .hud-row .progress-label {
+                margin-top: 0;
+                font-size: 9px;
+                line-height: 1.1;
+            }
+
+            .ui .hud-row .progress-bar {
+                display: none;
+            }
+
+            .ui .hud-row .map-tools {
+                flex-direction: row;
+                gap: 5px;
+            }
+
+            .ui .map-tools .map-tool {
+                min-width: 0;
+                min-height: 48px;
+                padding: 0 5px;
+                font-size: 10px;
+                letter-spacing: 0;
+            }
+
+            .lbl-long {
+                display: none;
+            }
+
+            .lbl-short {
+                display: inline;
+            }
+
+            .ui .weather-card {
+                max-height: 48dvh;
+            }
+
+            .ui .live-card {
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+                left: auto;
+                width: min(360px, 46vw);
+            }
+
+            .journey-video {
+                right: calc(10px + env(safe-area-inset-right, 0px));
+                bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+                left: auto;
+                width: min(320px, 44vw);
+            }
+
+            .leaflet-control-zoom {
+                display: none;
+            }
+
+            .leaflet-bottom.leaflet-right {
+                margin-right: calc(4px + env(safe-area-inset-right, 0px));
+                margin-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+            }
+        }
     </style>
 </head>
 
@@ -2366,7 +2628,9 @@
             window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         function isMobile() {
-            return window.matchMedia("(max-width: 700px)").matches;
+            return window.matchMedia(
+                "(max-width: 700px), (max-width: 900px) and (max-height: 500px)"
+            ).matches;
         }
 
         function sleep(ms) {
@@ -3846,6 +4110,9 @@
             const nextStep =
                 etapes.find(step => Number(step.id) === FIXED_NEXT_STEP_ID) ||
                 null;
+            const journeyDay = Number(
+                currentStep?.jour ?? etapes[latestIndex]?.jour
+            ) || 0;
 
             const currentPoint = currentStep
                 ? [Number(currentStep.latitude), Number(currentStep.longitude)]
@@ -3979,7 +4246,7 @@
                 `${etapes.length} étapes`;
 
             document.getElementById("routeStatus").textContent =
-                `${daysPresent.length} jours cartographiés`;
+                `${journeyDay} jour${journeyDay > 1 ? "s" : ""} cartographié${journeyDay > 1 ? "s" : ""}`;
 
             const routeColors = routeCoordinates.slice(0, -1).map((_, index) => {
                 const etape = routeSteps[index];
@@ -4013,7 +4280,7 @@
 
             setProgress(
                 currentDay,
-                currentStep?.jour ?? etapes[latestIndex]?.jour ?? ""
+                journeyDay || ""
             );
 
             const latestCoordinateValue = currentPoint || coordinates[latestIndex] || coordinates[coordinates.length - 1] || null;
