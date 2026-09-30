@@ -2522,9 +2522,11 @@
             const railwaySegments = routeSteps.slice(0, -1).map((step, index) => {
                 const startTitle = normalizePlaceName(step.titre);
                 const endTitle = normalizePlaceName(routeSteps[index + 1].titre);
+                const isNouadhibou = title =>
+                    title.includes("nouadhib") || title.includes("nouadib");
                 return (
-                    (startTitle.includes("choum") && endTitle.includes("nouadib")) ||
-                    (startTitle.includes("nouadib") && endTitle.includes("choum"))
+                    (startTitle.includes("choum") && isNouadhibou(endTitle)) ||
+                    (isNouadhibou(startTitle) && endTitle.includes("choum"))
                 );
             });
 
