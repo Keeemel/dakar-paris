@@ -1977,10 +1977,228 @@
 
 
         /* ==================================================
-           CALCUL DU TRAJET ROUTIER
+           CALCUL DES TRACÉS
         ================================================== */
 
-        async function drawRoute(coordinates, routeColors, straightSegments = []) {
+        let railwayNetworkPromise = null;
+
+        function findRailwayPath(elements, start, end) {
+            const adjacency = new Map();
+            const nodeCoordinates = new Map();
+
+            const addEdge = (from, to, distance) => {
+                if (!adjacency.has(from)) {
+                    adjacency.set(from, []);
+                }
+                adjacency.get(from).push({ node: to, distance });
+            };
+
+            const distanceBetween = (first, second) => {
+                const radians = value => value * Math.PI / 180;
+                const latitudeDelta = radians(second[0] - first[0]);
+                const longitudeDelta = radians(second[1] - first[1]);
+                const a =
+                    Math.sin(latitudeDelta / 2) ** 2 +
+                    Math.cos(radians(first[0])) *
+                    Math.cos(radians(second[0])) *
+                    Math.sin(longitudeDelta / 2) ** 2;
+
+                return 6371000 * 2 * Math.atan2(
+                    Math.sqrt(a),
+                    Math.sqrt(1 - a)
+                );
+            };
+
+            for (const way of elements) {
+                if (!Array.isArray(way.geometry) || way.geometry.length < 2) {
+                    continue;
+                }
+
+                const nodeIds = way.nodes || [];
+                const wayNodes = way.geometry.map((point, index) => {
+                    const node = nodeIds[index] ?? `${point.lat},${point.lon}`;
+                    const coordinate = [Number(point.lat), Number(point.lon)];
+                    nodeCoordinates.set(node, coordinate);
+                    return node;
+                });
+
+                for (let index = 0; index < wayNodes.length - 1; index++) {
+                    const first = wayNodes[index];
+                    const second = wayNodes[index + 1];
+                    const distance = distanceBetween(
+                        nodeCoordinates.get(first),
+                        nodeCoordinates.get(second)
+                    );
+                    addEdge(first, second, distance);
+                    addEdge(second, first, distance);
+                }
+            }
+
+            if (!nodeCoordinates.size) {
+                throw new Error("Aucune géométrie ferroviaire reçue.");
+            }
+
+            const nearestNode = coordinate => {
+                let nearest = null;
+                let nearestDistance = Infinity;
+
+                for (const [node, nodeCoordinate] of nodeCoordinates) {
+                    const distance = distanceBetween(coordinate, nodeCoordinate);
+                    if (distance < nearestDistance) {
+                        nearest = node;
+                        nearestDistance = distance;
+                    }
+                }
+
+                if (nearest === null || nearestDistance > 20000) {
+                    throw new Error(
+                        "Voie ferrée trop éloignée d’une étape du parcours."
+                    );
+                }
+
+                return nearest;
+            };
+
+            const startNode = nearestNode(start);
+            const endNode = nearestNode(end);
+            const distances = new Map([[startNode, 0]]);
+            const previous = new Map();
+            const queue = [[0, startNode]];
+
+            const push = entry => {
+                queue.push(entry);
+                let index = queue.length - 1;
+                while (index > 0) {
+                    const parent = Math.floor((index - 1) / 2);
+                    if (queue[parent][0] <= entry[0]) {
+                        break;
+                    }
+                    queue[index] = queue[parent];
+                    index = parent;
+                }
+                queue[index] = entry;
+            };
+
+            const pop = () => {
+                const first = queue[0];
+                const last = queue.pop();
+
+                if (queue.length && last) {
+                    let index = 0;
+                    while (true) {
+                        const left = index * 2 + 1;
+                        const right = left + 1;
+                        if (left >= queue.length) {
+                            break;
+                        }
+                        const child =
+                            right < queue.length && queue[right][0] < queue[left][0]
+                                ? right
+                                : left;
+                        if (queue[child][0] >= last[0]) {
+                            break;
+                        }
+                        queue[index] = queue[child];
+                        index = child;
+                    }
+                    queue[index] = last;
+                }
+
+                return first;
+            };
+
+            while (queue.length) {
+                const [distance, node] = pop();
+                if (distance !== distances.get(node)) {
+                    continue;
+                }
+                if (node === endNode) {
+                    break;
+                }
+
+                for (const edge of adjacency.get(node) || []) {
+                    const nextDistance = distance + edge.distance;
+                    if (nextDistance < (distances.get(edge.node) ?? Infinity)) {
+                        distances.set(edge.node, nextDistance);
+                        previous.set(edge.node, node);
+                        push([nextDistance, edge.node]);
+                    }
+                }
+            }
+
+            if (!distances.has(endNode)) {
+                throw new Error(
+                    "Impossible de relier Choum et Nouadhibou par le réseau ferroviaire."
+                );
+            }
+
+            const path = [];
+            for (let node = endNode; node !== undefined; node = previous.get(node)) {
+                path.push(nodeCoordinates.get(node));
+                if (node === startNode) {
+                    break;
+                }
+            }
+
+            if (path.length === 0 || path[path.length - 1] !== nodeCoordinates.get(startNode)) {
+                throw new Error("Le tracé ferroviaire est incomplet.");
+            }
+
+            path.reverse();
+            return {
+                type: "LineString",
+                coordinates: [
+                    [start[1], start[0]],
+                    ...path.map(coordinate => [coordinate[1], coordinate[0]]),
+                    [end[1], end[0]]
+                ]
+            };
+        }
+
+        async function fetchRailwayRoute(start, end) {
+            if (!railwayNetworkPromise) {
+                const query =
+                    "[out:json][timeout:25];" +
+                    "way[\"railway\"=\"rail\"](20.7,-17.3,21.5,-12.8);" +
+                    "out body geom;";
+                const endpoints = [
+                    "https://overpass-api.de/api/interpreter",
+                    "https://overpass.kumi.systems/api/interpreter"
+                ];
+
+                railwayNetworkPromise = (async () => {
+                    const errors = [];
+
+                    for (const endpoint of endpoints) {
+                        try {
+                            const response = await fetch(
+                                `${endpoint}?data=${encodeURIComponent(query)}`
+                            );
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                            }
+
+                            const data = await response.json();
+                            if (!Array.isArray(data.elements)) {
+                                throw new Error("Réponse OpenStreetMap invalide.");
+                            }
+                            return data.elements;
+                        } catch (error) {
+                            errors.push(`${endpoint}: ${error.message}`);
+                        }
+                    }
+
+                    throw new Error(
+                        `Données ferroviaires indisponibles. ${errors.join(" ; ")}`
+                    );
+                })();
+            }
+
+            const elements = await railwayNetworkPromise;
+            return findRailwayPath(elements, start, end);
+        }
+
+        async function drawRoute(coordinates, routeColors, railwaySegments = []) {
 
             if (coordinates.length < 2) {
                 return;
@@ -1988,7 +2206,7 @@
 
 
             console.log(
-                "Calcul du trajet routier..."
+                "Calcul des trajets..."
             );
 
 
@@ -2038,14 +2256,8 @@
 
                     let geometry;
 
-                    if (straightSegments[i]) {
-                        geometry = {
-                            type: "LineString",
-                            coordinates: [
-                                [startLng, startLat],
-                                [endLng, endLat]
-                            ]
-                        };
+                    if (railwaySegments[i]) {
+                        geometry = await fetchRailwayRoute(start, end);
                     } else {
                         const url =
                             "https://router.project-osrm.org/route/v1/driving/" +
@@ -2123,6 +2335,16 @@
 
 
                 } catch (error) {
+
+                    if (railwaySegments[i]) {
+                        console.error(
+                            "Impossible de tracer le segment ferroviaire Choum–Nouadhibou.",
+                            error
+                        );
+                        document.getElementById("routeStatus").textContent =
+                            "Tracé ferroviaire indisponible";
+                        continue;
+                    }
 
                     console.warn(
                         `Impossible de calculer le segment ${i + 1}`,
@@ -2297,7 +2519,7 @@
                 .normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "")
                 .toLowerCase();
-            const straightSegments = routeSteps.slice(0, -1).map((step, index) => {
+            const railwaySegments = routeSteps.slice(0, -1).map((step, index) => {
                 const startTitle = normalizePlaceName(step.titre);
                 const endTitle = normalizePlaceName(routeSteps[index + 1].titre);
                 return (
@@ -2358,7 +2580,7 @@
 
             });
 
-            await drawRoute(routeCoordinates, routeColors, straightSegments);
+            await drawRoute(routeCoordinates, routeColors, railwaySegments);
 
 
             /*
