@@ -1980,7 +1980,38 @@
            CALCUL DES TRACÉS
         ================================================== */
 
-        let railwayNetworkPromise = null;
+        // Simplified from OSM way 30021970 to avoid relying on live Overpass queries.
+        const CHOUM_NOUADHIBOU_RAILWAY_POLYLINE =
+            "bXR+YENkanduQVd6bkN6RHpqQGpcanBafmBBZnNNYmNAZH5DZkhucUJ8WGp4QWxDbHFBcm5BeH5FamtAemREeHFGfGtVdlZ+YkB4dkBmaUJqRGhSaEh4dUFrUWRwRF9KcF9GcGpAfnJKYUNia0VsV3JsRXRXemZIYU9ocERpXn5mQ3hLZmVBc0xudVB0SGBjRXdOcm1SaWhBdGhLfENiekN7VX5nQl9LdHhEa3lAbHlDZ2tCdG9TaWBAYm9Ha2JAdnxCW2h3QG9rQWxiR3FoQHp9RHFTfmhQckB4fEVjUXplUXtmQGRqUUB4ZUF1SnxfQnNWanBCZ0d2bUR1SX5hQXhCcGhFZ0l0Z0JuRnBtRmlBdGNGfEVmYEN6TXpqY0B1VXJhZ0BlTHp7RWtYaHhAd0p+bkFoRmxzQXBbamJhQGBXcn5IdVJme0BnWWBgRnZEbHlBdE9wZkBmQnRVa150e0loQnB6RXlFbmxOYVN6dkdvUGZ5QnFXZHtBZXJAYnRVakRqdkRxQnpwQW10QGJtS35SeHxFeGFAbHBCdmlAfHNBemxAbnxDYEd+ZkFsVWR5QHpFfmtCa1J+Ykl2Q2pXdFh8dkB+QmJbbXpAcG9EX0RibkFqT3xlQX1FYHtAdktiZ0VkekBkeENjR3ZhQ3paYGhBe0Vsd0BkS35sQ25TfHxOdEZubEFrRHhuQHZFdHdEdWVAbHFHeUVgdUhmS3BhQHJxQHp2QHRoQ2BfQXhfQGZrQHJ1QWxhQXRrQHRMbmFFZn5BdHZJaHRDeGFEcGxAfHJBc0BqZEB4SWx4RHRfQ3BtQmpvQGZkQmJfQGpoRXNAenxGfHZAbGdBamFA";
+
+        function decodeRailwayPolyline(encoded) {
+            const coordinates = [];
+            let index = 0;
+            let latitude = 0;
+            let longitude = 0;
+
+            while (index < encoded.length) {
+                const readDelta = () => {
+                    let result = 0;
+                    let shift = 0;
+                    let byte;
+
+                    do {
+                        byte = encoded.charCodeAt(index++) - 63;
+                        result |= (byte & 0x1f) << shift;
+                        shift += 5;
+                    } while (byte >= 0x20);
+
+                    return result & 1 ? ~(result >> 1) : result >> 1;
+                };
+
+                latitude += readDelta();
+                longitude += readDelta();
+                coordinates.push([latitude / 1e5, longitude / 1e5]);
+            }
+
+            return coordinates;
+        }
 
         function findRailwayPath(elements, start, end) {
             const adjacency = new Map();
@@ -2155,56 +2186,16 @@
             };
         }
 
-        async function fetchRailwayRoute(start, end) {
-            if (!railwayNetworkPromise) {
-                const query =
-                    "[out:json][timeout:25];" +
-                    "way[\"railway\"=\"rail\"](20.7,-17.3,21.5,-12.8);" +
-                    "out body geom;";
-                const endpoints = [
-                    "https://overpass-api.de/api/interpreter",
-                    "https://overpass.kumi.systems/api/interpreter"
-                ];
+        function getRailwayRoute(start, end) {
+            const railwayCoordinates = decodeRailwayPolyline(
+                atob(CHOUM_NOUADHIBOU_RAILWAY_POLYLINE)
+            );
+            const railwayWay = {
+                nodes: railwayCoordinates.map((_, index) => index),
+                geometry: railwayCoordinates.map(([lat, lon]) => ({ lat, lon }))
+            };
 
-                railwayNetworkPromise = (async () => {
-                    const errors = [];
-
-                    for (const endpoint of endpoints) {
-                        const controller = new AbortController();
-                        const timeout = setTimeout(
-                            () => controller.abort(),
-                            12000
-                        );
-
-                        try {
-                            const response = await fetch(
-                                `${endpoint}?data=${encodeURIComponent(query)}`,
-                                { signal: controller.signal }
-                            );
-                            if (!response.ok) {
-                                throw new Error(`HTTP ${response.status}`);
-                            }
-
-                            const data = await response.json();
-                            if (!Array.isArray(data.elements)) {
-                                throw new Error("Réponse OpenStreetMap invalide.");
-                            }
-                            return data.elements;
-                        } catch (error) {
-                            errors.push(`${endpoint}: ${error.message}`);
-                        } finally {
-                            clearTimeout(timeout);
-                        }
-                    }
-
-                    throw new Error(
-                        `Données ferroviaires indisponibles. ${errors.join(" ; ")}`
-                    );
-                })();
-            }
-
-            const elements = await railwayNetworkPromise;
-            return findRailwayPath(elements, start, end);
+            return findRailwayPath([railwayWay], start, end);
         }
 
         async function drawRoute(coordinates, routeColors, railwaySegments = []) {
@@ -2266,7 +2257,7 @@
                     let geometry;
 
                     if (railwaySegments[i]) {
-                        geometry = await fetchRailwayRoute(start, end);
+                        geometry = getRailwayRoute(start, end);
                     } else {
                         const url =
                             "https://router.project-osrm.org/route/v1/driving/" +
@@ -2310,11 +2301,11 @@
 
                                 color,
 
-                                weight: 5,
+                                weight: railwaySegments[i] ? 6 : 5,
 
                                 opacity: 0.92,
 
-                                dashArray: "10 7",
+                                dashArray: railwaySegments[i] ? null : "10 7",
 
                                 lineCap: "round",
 
