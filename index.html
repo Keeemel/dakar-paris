@@ -1980,7 +1980,7 @@
            CALCUL DU TRAJET ROUTIER
         ================================================== */
 
-        async function drawRoute(coordinates, routeColors) {
+        async function drawRoute(coordinates, routeColors, straightSegments = []) {
 
             if (coordinates.length < 2) {
                 return;
@@ -2034,47 +2034,47 @@
                     route.color;
 
 
-                const url =
-                    "https://router.project-osrm.org/route/v1/driving/" +
-                    `${startLng},${startLat};` +
-                    `${endLng},${endLat}` +
-                    "?overview=full&geometries=geojson";
-
-
                 try {
 
-                    const response =
-                        await fetch(url);
+                    let geometry;
 
+                    if (straightSegments[i]) {
+                        geometry = {
+                            type: "LineString",
+                            coordinates: [
+                                [startLng, startLat],
+                                [endLng, endLat]
+                            ]
+                        };
+                    } else {
+                        const url =
+                            "https://router.project-osrm.org/route/v1/driving/" +
+                            `${startLng},${startLat};` +
+                            `${endLng},${endLat}` +
+                            "?overview=full&geometries=geojson";
 
-                    if (!response.ok) {
+                        const response = await fetch(url);
 
-                        throw new Error(
-                            `OSRM HTTP ${response.status}`
-                        );
+                        if (!response.ok) {
+                            throw new Error(
+                                `OSRM HTTP ${response.status}`
+                            );
+                        }
 
+                        const data = await response.json();
+
+                        if (
+                            data.code !== "Ok" ||
+                            !data.routes ||
+                            !data.routes.length
+                        ) {
+                            throw new Error(
+                                "Aucune route trouvée."
+                            );
+                        }
+
+                        geometry = data.routes[0].geometry;
                     }
-
-
-                    const data =
-                        await response.json();
-
-
-                    if (
-                        data.code !== "Ok" ||
-                        !data.routes ||
-                        !data.routes.length
-                    ) {
-
-                        throw new Error(
-                            "Aucune route trouvée."
-                        );
-
-                    }
-
-
-                    const geometry =
-                        data.routes[0].geometry;
 
 
                     /*
@@ -2286,12 +2286,25 @@
                 Number(etape.longitude)
             ]);
 
-            const routeCoordinates = etapes
-                .filter(etape => Number(etape.id) !== FIXED_NEXT_STEP_ID)
+            const routeSteps = etapes
+                .filter(etape => Number(etape.id) !== FIXED_NEXT_STEP_ID);
+            const routeCoordinates = routeSteps
                 .map(etape => [
                     Number(etape.latitude),
                     Number(etape.longitude)
                 ]);
+            const normalizePlaceName = value => String(value || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase();
+            const straightSegments = routeSteps.slice(0, -1).map((step, index) => {
+                const startTitle = normalizePlaceName(step.titre);
+                const endTitle = normalizePlaceName(routeSteps[index + 1].titre);
+                return (
+                    (startTitle.includes("choum") && endTitle.includes("nouadib")) ||
+                    (startTitle.includes("nouadib") && endTitle.includes("choum"))
+                );
+            });
 
             const dayColors = [
                 "#e35d3f",
@@ -2334,7 +2347,7 @@
                 `${daysPresent.length} jours cartographiés`;
 
             const routeColors = routeCoordinates.slice(0, -1).map((_, index) => {
-                const etape = etapes.filter(step => Number(step.id) !== FIXED_NEXT_STEP_ID)[index];
+                const etape = routeSteps[index];
                 const day = Number(etape?.jour || 0);
                 const isNeutral = day === 0 || Number(etape?.id) === FIXED_NEXT_STEP_ID;
 
@@ -2345,7 +2358,7 @@
 
             });
 
-            await drawRoute(routeCoordinates, routeColors);
+            await drawRoute(routeCoordinates, routeColors, straightSegments);
 
 
             /*
