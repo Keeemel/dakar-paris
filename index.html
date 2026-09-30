@@ -2170,9 +2170,16 @@
                     const errors = [];
 
                     for (const endpoint of endpoints) {
+                        const controller = new AbortController();
+                        const timeout = setTimeout(
+                            () => controller.abort(),
+                            12000
+                        );
+
                         try {
                             const response = await fetch(
-                                `${endpoint}?data=${encodeURIComponent(query)}`
+                                `${endpoint}?data=${encodeURIComponent(query)}`,
+                                { signal: controller.signal }
                             );
                             if (!response.ok) {
                                 throw new Error(`HTTP ${response.status}`);
@@ -2185,6 +2192,8 @@
                             return data.elements;
                         } catch (error) {
                             errors.push(`${endpoint}: ${error.message}`);
+                        } finally {
+                            clearTimeout(timeout);
                         }
                     }
 
@@ -2405,6 +2414,14 @@
 
         }
 
+        function drawRouteInBackground(coordinates, routeColors, railwaySegments = []) {
+            drawRoute(coordinates, routeColors, railwaySegments).catch(error => {
+                console.error("Impossible d’afficher les tracés.", error);
+                document.getElementById("routeStatus").textContent =
+                    "Tracés indisponibles";
+            });
+        }
+
 
         /* ==================================================
            AFFICHAGE
@@ -2582,7 +2599,7 @@
 
             });
 
-            await drawRoute(routeCoordinates, routeColors, railwaySegments);
+            drawRouteInBackground(routeCoordinates, routeColors, railwaySegments);
 
 
             /*
@@ -2599,7 +2616,7 @@
             latestCoordinate = latestCoordinateValue;
 
             if (currentPoint && nextPoint && coordinates.length > 1) {
-                await drawRoute(
+                drawRouteInBackground(
                     [currentPoint, nextPoint],
                     [{ day: 0, color: "#8e8a84" }]
                 );
